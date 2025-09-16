@@ -6,10 +6,20 @@
   <div class="recipe-list">
     {% for r in recipes %}
       <div class="recipe-card">
-        {% if r.image_url %}
-          <img src="{{ r.image_url }}" alt="{{ r.name }}" class="recipe-thumb">
-        {% endif %}
-        <h3><a href="{{ url_for('recipe_detail', recipe_id=r.id) }}">{{ r.name }}</a></h3>
+
+        <!-- Fixed-height image area -->
+        <div class="image-wrapper">
+          {% if r.image_url %}
+            <a href="{{ url_for('recipe_detail', recipe_id=r.id) }}">
+              <img src="{{ r.image_url }}" alt="{{ r.name }}">
+            </a>
+          {% endif %}
+        </div>
+
+        <!-- ✅ Fixed-height title zone -->
+        <div class="title-wrapper">
+          <h3><a href="{{ url_for('recipe_detail', recipe_id=r.id) }}">{{ r.name }}</a></h3>
+        </div>
 
         {% if r.tags %}
           <div class="recipe-tags">
@@ -18,6 +28,7 @@
             {% endfor %}
           </div>
         {% endif %}
+
       </div>
     {% endfor %}
   </div>

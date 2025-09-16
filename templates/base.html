@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <title>{% block title %}Salim's Recipe Collection{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -11,7 +13,9 @@
     <nav>
       <a href="/recipes">Recipes</a> |
       <a href="/add">Add</a> |
-      <a href="/search">Search</a>
+      <a href="/search">Search</a> |
+      <a href="{{ url_for('admin_tags') }}">Manage Tags</a> 
+
     </nav>
   </header>
   <main>

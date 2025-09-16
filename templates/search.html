@@ -5,7 +5,7 @@
   <!-- Heading with checkbox beside it -->
   <h2 class="search-header">
     Search Recipes
-    <label class="inline-check">
+    <label class="inline-check search-ingredients-label">
       <input type="checkbox" name="include_ingredients" form="search-form"
              {% if include_ingredients %}checked{% endif %}>
       Search ingredients too
@@ -24,12 +24,16 @@
     <div class="recipe-grid">
       {% for recipe in matches %}
         <div class="recipe-card">
-          {% if recipe.image_url %}
-            <a href="/recipe/{{ recipe.id }}">
-              <img src="{{ recipe.image_url }}" alt="{{ recipe.name }}" class="thumb">
-            </a>
-          {% endif %}
-          <h3><a href="/recipe/{{ recipe.id }}">{{ recipe.name }}</a></h3>
+          <div class="image-wrapper">
+            {% if recipe.image_url %}
+              <a href="/recipe/{{ recipe.id }}">
+                <img src="{{ recipe.image_url }}" alt="{{ recipe.name }}">
+              </a>
+            {% endif %}
+          </div>
+          <div class="title-wrapper">
+            <h3><a href="/recipe/{{ recipe.id }}">{{ recipe.name }}</a></h3>
+          </div>
           <p>{{ recipe.ingredients.splitlines()[0] if recipe.ingredients else "" }}</p>
         </div>
       {% endfor %}

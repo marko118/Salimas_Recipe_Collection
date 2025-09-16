@@ -1,7 +1,7 @@
 /* ===== Global variables ===== */
 :root {
     --brand: #87d6d4;        /* main blue */
-    --brand-dark: #4a8a88;   /* darker blue for hover */
+    --brand-dark: #0a8274;   /* darker blue for hover */
     --background: #f0eedd;   /* light page background */
 }
 
@@ -17,7 +17,7 @@ body {
 header,
 footer {
     background: var(--brand);
-    color: white;
+    color: var(--brand-dark);
     padding: 1rem;
     text-align: center;
 }
@@ -43,7 +43,7 @@ a:hover {
 
 /* ===== Header navigation ===== */
 header nav a {
-    color: white;
+    color: var(brand-dark);
     text-decoration: none;
     margin: 0 0.75rem;
     font-weight: 600;
@@ -126,9 +126,13 @@ button:hover {
 /* Two-column grid inside each group */
 .tag-box {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.4rem 1rem;   /* row and column gap */
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+    max-height: 300px;       /* adjust to taste */
+    overflow-y: auto;        /* enable vertical scroll if needed */
+    padding-right: 0.5rem;   /* room for scrollbar */
 }
+
 
 /* Label text left, checkbox right */
 .tag-box label {
@@ -307,5 +311,177 @@ button:hover {
     gap: 0.4rem;
     font-size: 0.9rem;
     cursor: pointer;
+}
+
+.admin-tags-form fieldset {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 0.75rem 1rem 1rem;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 1rem;
+}
+
+.admin-tags-form legend {
+    font-weight: 600;
+    padding: 0 0.5rem;
+}
+
+.admin-tags-form .hint {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: -0.25rem;
+}
+
+header, header * {
+    color: var(--brand-dark) !important;
+}
+
+}
+/* === Grid for all recipes and search results === */
+.recipe-grid,
+.recipe-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    align-items: start;          /* ✅ keep each card aligned at the top */
+}
+
+/* === Recipe cards with fixed image zone === */
+.recipe-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 280px;           /* overall minimum height */
+}
+
+/* ----- Fixed image area ----- */
+.recipe-card .image-wrapper {
+    width: 100%;
+    height: 110px;               /* fixed space for the image */
+    margin-bottom: 0.55rem;
+    border-radius: 8px;
+    background: #eee;            /* subtle placeholder colour */
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.recipe-card .image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;           /* fill box, crop if needed */
+    border-radius: 8px;
+}
+
+
+/* ===== Mobile: force single column on phones ===== */
+@media (max-width: 600px) {
+  .recipe-list {
+      display: grid !important;
+      grid-template-columns: 1fr !important;  /* exactly 1 card per row */
+      gap: 1rem !important;
+  }
+
+  /* Optional comfort tweaks */
+  body { font-size: 1.05rem; }
+  button, .btn { font-size: 1rem; padding: 0.7rem 1.2rem; }
+}
+
+/* Small tablets / big phones: allow two columns */
+@media (min-width: 601px) and (max-width: 800px) {
+  .recipe-list {
+      grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+/* ===== Fixed-height title slot for recipe cards ===== */
+.recipe-card .title-wrapper {
+    height: 70px;              /* fixed space for up to two lines of text */
+    display: flex;
+    align-items: center;       /* vertical centering for short titles */
+    justify-content: center;   /* horizontal centering */
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.recipe-card .title-wrapper h3 {
+    margin: 0;                 /* remove default h3 spacing */
+    line-height: 1.2;          /* tighter line spacing if it wraps */
+}
+
+ extends "base.html" %}
+{% block title %}Search{% endblock %}
+
+{% block content %}
+  <!-- Heading with checkbox beside it -->
+  <h2 class="search-header">
+    Search Recipes
+    <label class="inline-check">
+      <input type="checkbox" name="include_ingredients" form="search-form"
+             {% if include_ingredients %}checked{% endif %}>
+      Search ingredients too
+    </label>
+  </h2>
+
+  <!-- Search form -->
+  <form id="search-form" method="post" class="search-form" style="margin-bottom:1rem;">
+    <input name="query" placeholder="e.g. beef or onion" value="{{ query }}">
+    <button type="submit">Search</button>
+  </form>
+
+  <!-- Results -->
+  {% if matches %}
+    <h3>Results</h3>
+    <div class="recipe-grid">
+      {% for recipe in matches %}
+        <div class="recipe-card">
+
+          <!-- Fixed-height image area -->
+          <div class="image-wrapper">
+            {% if recipe.image_url %}
+              <a href="/recipe/{{ recipe.id }}">
+                <img src="{{ recipe.image_url }}" alt="{{ recipe.name }}">
+              </a>
+            {% endif %}
+          </div>
+
+          <!-- Fixed-height title area -->
+          <div class="title-wrapper">
+            <h3><a href="/recipe/{{ recipe.id }}">{{ recipe.name }}</a></h3>
+          </div>
+
+          <p>{{ recipe.ingredients.splitlines()[0] if recipe.ingredients else "" }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% elif query %}
+    <p>No recipes found.</p>
+  {% endif %}
+{% endblock %}
+
+
+
+/* === Style for the "Search ingredients too" pill === */
+.search-ingredients-label {
+    background: #fff !important;
+    border: 1px solid var(--brand-dark) !important;
+    border-radius: 12px !important;
+    padding: 0.25rem 0.6rem !important;
+    margin-left: 1rem !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    cursor: pointer !important;
+}
+
+.search-ingredients-label input[type="checkbox"] {
+    margin: 0 !important;
+    accent-color: var(--brand) !important;
 }
 

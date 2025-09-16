@@ -5,6 +5,21 @@ from pathlib import Path
 import re
 import spacy
 
+import json
+from pathlib import Path
+
+TAGS_PATH = Path(__file__).with_name("tags.json")
+
+def load_tags_json():
+    if TAGS_PATH.exists():
+        with TAGS_PATH.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+def save_tags_json(data: dict):
+    with TAGS_PATH.open("w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
 DB_PATH = "recipes.db"
 app = Flask(__name__)
 
@@ -202,7 +217,19 @@ def lexical_hit(query: str, name: str, ingredients: str, method: str) -> bool:
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    rows = get_all_recipes()
+    recipes = [
+        {
+            "id": r[0],
+            "name": r[1],
+            "ingredients": r[2] or "",
+            "method": r[3] or "",
+            "image_url": r[4] or "",
+            "tags": r[5] or ""
+        }
+        for r in rows
+    ]
+    return render_template("recipes.html", recipes=recipes)
 
 
 @app.route("/recipes")
@@ -240,7 +267,6 @@ def recipe_detail(recipe_id):
         tags=tags or ""
     )
 
-
 @app.route("/add", methods=["GET", "POST"])
 def add_recipe():
     if request.method == "POST":
@@ -259,13 +285,17 @@ def add_recipe():
             add_recipe_to_db(name, ingredients, method, image_url, tags)
             return redirect(url_for("recipe_list"))
 
+    # ✅ This part runs when we need to show the form (GET request)
+    tags_dict = load_tags_json()   # read your new tags.json file
     return render_template(
         "add.html",
-        ingredient_tags=INGREDIENT_TAGS,
-        type_tags=TYPE_TAGS,
-        other_tags=OTHER_TAGS,
-        occasion_tags=OCCASION_TAGS
+        ingredient_tags=tags_dict.get("Ingredients", []),
+        type_tags=tags_dict.get("Type", []),
+        other_tags=tags_dict.get("Other", []),
+        occasion_tags=tags_dict.get("Occasion", [])
     )
+
+
 @app.route("/edit/<int:recipe_id>", methods=["GET", "POST"])
 def edit_recipe(recipe_id):
     row = get_recipe(recipe_id)
@@ -275,9 +305,9 @@ def edit_recipe(recipe_id):
     rid, name, ingredients, method, image_url, tags = row
     existing_tags = set((tags or "").split(","))
 
-    # ✅ combine all predefined tags
-    all_known = set(INGREDIENT_TAGS + TYPE_TAGS + OTHER_TAGS + OCCASION_TAGS)
-    # ✅ only custom tags (not in predefined sets)
+    # ✅ Load all predefined tags from tags.json
+    tags_dict = load_tags_json()
+    all_known = set(t for g in tags_dict.values() for t in g)
     custom_only = ",".join(t for t in existing_tags if t and t not in all_known)
 
     if request.method == "POST":
@@ -294,7 +324,6 @@ def edit_recipe(recipe_id):
             checked.extend([t.strip() for t in extra.split(",") if t.strip()])
 
         tags = ",".join(checked)
-
         update_recipe(rid, name, ingredients, method, image_url, tags)
         return redirect(url_for("recipe_detail", recipe_id=rid))
 
@@ -306,12 +335,13 @@ def edit_recipe(recipe_id):
         method=method or "",
         image_url=image_url or "",
         tags=tags or "",
-        extra_tags=custom_only,                 # ✅ pass only the custom tags
-        ingredient_tags=INGREDIENT_TAGS,
-        type_tags=TYPE_TAGS,
-        other_tags=OTHER_TAGS,
-        occasion_tags=OCCASION_TAGS
+        extra_tags=custom_only,  # ✅ only custom tags
+        ingredient_tags=tags_dict.get("Ingredients", []),
+        type_tags=tags_dict.get("Type", []),
+        other_tags=tags_dict.get("Other", []),
+        occasion_tags=tags_dict.get("Occasion", [])
     )
+
 
 
 
@@ -351,6 +381,28 @@ def search():
         query=query,
         include_ingredients=include_ingredients
     )
+
+@app.route("/admin/tags", methods=["GET", "POST"])
+def admin_tags():
+    tags_dict = load_tags_json()
+
+    if request.method == "POST":
+        new_data = {}
+        # Each group will come back as a textarea named like group_Ingredients
+        for key, val in request.form.items():
+            if key.startswith("group_"):
+                group_name = key[len("group_"):]
+                # Split on newlines or commas, strip whitespace
+                items = [t.strip() for t in val.replace(",", "\n").splitlines() if t.strip()]
+                # Remove duplicates while preserving order
+                new_data[group_name] = list(dict.fromkeys(items))
+
+        # Save the updated groups back to JSON
+        save_tags_json(new_data)
+        return redirect(url_for("admin_tags"))
+
+    # GET request: show current groups
+    return render_template("admin_tags.html", tags_dict=tags_dict)
 
 
 # ---------------------------

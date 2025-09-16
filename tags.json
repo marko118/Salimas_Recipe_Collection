@@ -1,0 +1,40 @@
+{
+  "Ingredients": [
+    "Beef",
+    "Pork",
+    "Chicken",
+    "Lamb",
+    "Turkey",
+    "Vegetarian",
+    "Rice",
+    "Pasta",
+    "Fish",
+    "Salmon",
+    "Seafood",
+    "Avocado",
+    "Cheese"
+  ],
+  "Type": [
+    "Main",
+    "Side",
+    "Salad",
+    "Soup",
+    "Bread",
+    "Dessert",
+    "Brunch",
+    "Sauce"
+  ],
+  "Other": [
+    "Slow cooker",
+    "Quick",
+    "Easy",
+    "Tricky",
+    "Overnight",
+    "Large group"
+  ],
+  "Occasion": [
+    "Christmas",
+    "Chinese",
+    "Sunday"
+  ]
+}
