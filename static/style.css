@@ -126,9 +126,9 @@ button:hover {
 /* Two-column grid inside each group */
 .tag-box {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
     gap: 0.5rem;
-    max-height: 300px;       /* adjust to taste */
+    max-height: 400px;       /* adjust to taste */
     overflow-y: auto;        /* enable vertical scroll if needed */
     padding-right: 0.5rem;   /* room for scrollbar */
 }
