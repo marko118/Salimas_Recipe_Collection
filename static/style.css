@@ -1,0 +1,311 @@
+/* ===== Global variables ===== */
+:root {
+    --brand: #87d6d4;        /* main blue */
+    --brand-dark: #4a8a88;   /* darker blue for hover */
+    --background: #f0eedd;   /* light page background */
+}
+
+/* ===== Base layout ===== */
+body {
+    font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--background);
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+header,
+footer {
+    background: var(--brand);
+    color: white;
+    padding: 1rem;
+    text-align: center;
+}
+
+main {
+    max-width: 8000px;
+    margin: 2rem auto;
+    background: var(--background);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* ===== Links ===== */
+a {
+    color: var(--brand-dark);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+a:hover {
+    color: var(--brand);
+}
+
+/* ===== Header navigation ===== */
+header nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 0.75rem;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+header nav a:hover {
+    color: #ffeb3b;
+    text-decoration: underline;
+}
+
+/* ===== Form elements ===== */
+form input,
+form textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.5rem 0 1rem 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+button {
+    background: var(--brand);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+button:hover {
+    background: var(--brand-dark);
+}
+
+/* ===== Delete button ===== */
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.btn-danger:hover {
+    background: #c0392b;
+}
+
+/* ===== Recipe cards ===== */
+.recipe-card {
+    background: #ffffff;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* ===== Tag groups & checkboxes ===== */
+.tag-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.tag-groups fieldset {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 0.75rem 1rem 1rem;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.tag-groups legend {
+    font-weight: 600;
+    padding: 0 0.5rem;
+}
+
+/* Two-column grid inside each group */
+.tag-box {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.4rem 1rem;   /* row and column gap */
+}
+
+/* Label text left, checkbox right */
+.tag-box label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    padding: 0 0.3rem;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+/* Checkbox styling */
+.tag-box input[type="checkbox"] {
+    margin-left: 0.5rem;
+    accent-color: var(--brand);
+}
+
+/* ===== Clickable tag pills ===== */
+.tag-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+.tag-pill {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border: 2px solid var(--brand-dark);
+    border-radius: 20px;
+    background: #fff;
+    color: #333;
+    text-align: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+/* hide the native checkbox */
+.tag-pill input[type="checkbox"] {
+    display: none;
+}
+
+/* when checked, highlight pill */
+.tag-pill input[type="checkbox"]:checked + span {
+    background: var(--brand-dark);
+    color: #fff;
+    border-color: var(--brand-dark);
+}
+
+/* ===== Clickable tag pills ===== */
+.tag-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+.tag-pill {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border: 2px solid var(--brand-dark);
+    border-radius: 20px;
+    background: #fff;
+    color: #333;
+    text-align: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.tag-pill input[type="checkbox"] {
+    display: none;
+}
+
+.tag-pill:has(input[type="checkbox"]:checked) {
+    background: var(--brand-dark);
+    color: #fff;
+    border-color: var(--brand-dark);
+}
+
+
+/* ===== Displayed tags on recipe page ===== */
+.recipe-tags {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.recipe-tags span {
+    background: var(--brand-dark);
+    color: #fff;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+}
+
+.recipe-image {
+    max-width: 200px;       /* choose a size that suits you */
+    width: 100%;            /* scale down on small screens */
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    margin: 1rem 0;
+}
+
+/* Smaller images on the “all recipes” page */
+.recipe-thumb {
+    max-width: 70px;    /* thumbnail size */
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto 0.5rem;  /* center and add a little spacing */
+}
+
+/* Edit button style */
+.btn-edit {
+    display: inline-block;
+    background: var(--brand);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.2s ease;
+}
+.btn-edit:hover {
+    background: var(--brand-dark);
+}
+
+.method-text {
+    font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    margin-top: 0.5rem;
+}
+
+.recipe-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.2rem;
+}
+
+/* Grid layout for search results */
+.recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.2rem;
+}
+
+/* Thumbnail size for search results */
+.thumb {
+    max-width: 180px;   /* adjust to taste, e.g. 150px or 200px */
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto 0.5rem;
+}
+
+/* Heading with checkbox beside it */
+.search-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;           /* space between title and checkbox */
+    flex-wrap: wrap;     /* wrap neatly on narrow screens */
+    margin-bottom: 1rem;
+}
+
+.search-header .inline-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+

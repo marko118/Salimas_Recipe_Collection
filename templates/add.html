@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Add Recipe{% endblock %}
+{% block content %}
+  <h2>Add a Recipe</h2>
+
+  <form method="post">
+    <p>
+      <label>Name</label><br>
+      <input name="name" placeholder="e.g. Tagliatelle Carbonara" required>
+    </p>
+    <p>
+      <label>Ingredients (one per line)</label><br>
+      <textarea name="ingredients" rows="6"
+        placeholder="Examples:
+200 g penne
+2 cloves garlic, crushed
+1½ cups milk
+parmesan"></textarea>
+    </p>
+    <p>
+      <label>Method</label><br>
+      <textarea name="method" rows="8"
+        placeholder="Step-by-step instructions..."></textarea>
+    </p>
+    <p>
+      <label>Image URL (optional)</label><br>
+      <input name="image_url" placeholder="https://example.com/photo.jpg">
+    </p>
+
+    {# --- Grouped tag “pills” --- #}
+    <h3>Tags</h3>
+    <div class="tag-groups">
+
+      <fieldset>
+        <legend>Ingredients</legend>
+        <div class="tag-box">
+          {% for t in ingredient_tags %}
+            <label class="tag-pill">
+              <input type="checkbox" name="tags" value="{{ t }}">
+              <span>{{ t }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Type</legend>
+        <div class="tag-box">
+          {% for t in type_tags %}
+            <label class="tag-pill">
+              <input type="checkbox" name="tags" value="{{ t }}">
+              <span>{{ t }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Other</legend>
+        <div class="tag-box">
+          {% for t in other_tags %}
+            <label class="tag-pill">
+              <input type="checkbox" name="tags" value="{{ t }}">
+              <span>{{ t }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Occasion</legend>
+        <div class="tag-box">
+          {% for t in occasion_tags %}
+            <label class="tag-pill">
+              <input type="checkbox" name="tags" value="{{ t }}">
+              <span>{{ t }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <p>Extra tags (comma-separated):</p>
+      <input type="text" name="extra_tags" placeholder="e.g. spicy, family-favourite">
+    </div>
+    {# --- End tag section --- #}
+
+    <button type="submit">Save</button>
+  </form>
+
+  <p><a href="/recipes">View recipes</a> | <a href="/">Home</a></p>
+{% endblock %}
+

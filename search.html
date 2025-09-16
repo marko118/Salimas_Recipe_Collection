@@ -1,0 +1,10 @@
+<form method="post" class="search-form" style="margin-bottom:1rem;">
+  <input name="query" placeholder="e.g. beef or onion" value="{{ query }}">
+  <label class="inline-check">
+    <input type="checkbox" name="include_ingredients"
+           {% if include_ingredients %}checked{% endif %}>
+    Search ingredients too
+  </label>
+  <button type="submit">Search</button>
+</form>
+
