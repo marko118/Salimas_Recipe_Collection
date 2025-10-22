@@ -175,42 +175,78 @@ def parse_ingredients_block(block: str):
 # ---------------------------
 # Search helpers
 # ---------------------------
+# ---------------------------
+# Search helpers  (REPLACEMENT)
+# ---------------------------
+import re
+
 def recipe_score(query: str, name: str, ingredients: str, method: str) -> float:
-    """Semantic similarity between query and combined recipe text (0..1)."""
-    q = nlp(query)
-    text = " ".join([name or "", ingredients or "", method or ""])
-    r = nlp(text)
-    return q.similarity(r)
+    """
+    Semantic similarity between query and combined recipe text (0..1).
+    Includes the recipe *name* so title-only searches score correctly.
+    """
+    # Defensive: allow running without spaCy loaded or on very small devices
+    try:
+        q_doc = nlp(query)
+        t_doc = nlp(" ".join([name or "", ingredients or "", method or ""]))
+        return q_doc.similarity(t_doc)
+    except Exception:
+        # If NLP isn't available, fall back to a simple lexical score (0/1)
+        return 1.0 if lexical_hit(query, name, ingredients, method) else 0.0
+
 
 def _normalize(s: str) -> str:
+    """Lowercase, keep letters/numbers, collapse whitespace."""
     return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
+
+
+def _tokenize(s: str) -> list[str]:
+    """Normalized word list for prefix/substring checks."""
+    t = _normalize(s)
+    return t.split() if t else []
+
 
 def lexical_hit(query: str, name: str, ingredients: str, method: str) -> bool:
     """
-    Lexical fallback: substring, singular-ish, and lemma overlap.
-    Helps 'Frank' match "franks macaroni".
+    Lexical fallback with better partial matching.
+    - Prefix matches: 'pas' -> 'pasta', 'passata', 'pastry'
+    - Substring matches anywhere in the combined text
+    - Singular-ish fallbacks: 'beans' -> 'bean'
+    - Lemma overlap (spaCy), if available
+    Searches the combined text of NAME + INGREDIENTS + METHOD.
     """
     q = _normalize(query)
-    text = _normalize(" ".join([name or "", ingredients or "", method or ""]))
+    text = " ".join([_normalize(name), _normalize(ingredients), _normalize(method)]).strip()
 
-    if q and q in text:
+    if not q or not text:
+        return False
+
+    # 1) Prefix match against tokenized words (fast, very forgiving)
+    words = text.split()
+    if any(w.startswith(q) for w in words):
         return True
+
+    # 2) Substring anywhere
+    if q in text:
+        return True
+
+    # 3) Simple singular-ish fallbacks
     if q.endswith("s") and q[:-1] in text:
         return True
     if q.endswith("'s") and q[:-2] in text:
         return True
 
-    q_lemmas = {t.lemma_.lower() for t in nlp(query) if t.is_alpha}
-    t_lemmas = {t.lemma_.lower() for t in nlp(text) if t.is_alpha}
-    return any(l in t_lemmas for l in q_lemmas)
+    # 4) Lemma overlap if spaCy is available (ignore failures gracefully)
+    try:
+        q_lemmas = {t.lemma_.lower() for t in nlp(query) if t.is_alpha}
+        t_lemmas = {t.lemma_.lower() for t in nlp(text) if t.is_alpha}
+        if q_lemmas and t_lemmas and any(l in t_lemmas for l in q_lemmas):
+            return True
+    except Exception:
+        pass
 
-# ---------------------------
-# Routes
-# ---------------------------
+    return False
 
-# ---------------------------
-# Routes
-# ---------------------------
 # ---------------------------
 # Routes
 # ---------------------------
@@ -357,13 +393,16 @@ def search():
     matches = []
     query = ""
     include_ingredients = False
+
     if request.method == "POST":
         query = request.form.get("query", "").strip()
         include_ingredients = bool(request.form.get("include_ingredients"))
+
         if query:
             rows = get_all_recipes()
             for rid, name, ing, method, image_url, tags in rows:
-                text_to_check = (tags or "")
+                # Include NAME so title-only searches work; keep tags; optionally add ingredients
+                text_to_check = " ".join([(name or ""), (tags or "")]).strip()
                 if include_ingredients:
                     text_to_check += " " + (ing or "")
                 if query.lower() in text_to_check.lower():
@@ -375,12 +414,14 @@ def search():
                         "image_url": image_url or "",
                         "tags": tags or ""
                     })
+
     return render_template(
         "search.html",
         matches=matches,
         query=query,
         include_ingredients=include_ingredients
     )
+
 
 @app.route("/admin/tags", methods=["GET", "POST"])
 def admin_tags():
