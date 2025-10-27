@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+
+{% block content %}
+  <!-- Heading with checkbox beside it -->
+  <h2 class="search-header">
+    Search Recipes
+    <label class="inline-check search-ingredients-label">
+      <input type="checkbox" name="include_ingredients" form="search-form"
+             {% if include_ingredients %}checked{% endif %}>
+      Search ingredients too
+    </label>
+  </h2>
+
+<!-- Search form -->
+<form id="search-form" method="post" class="search-form" style="margin-bottom:1rem;">
+<input id="query" name="query" placeholder="e.g. beef or onion" value="{{ query }}" autofocus>
+
+  <button type="submit">Search</button>
+</form>
+
+
+  <!-- Results -->
+  {% if matches %}
+    <h3>Results</h3>
+    <div class="recipe-grid">
+      {% for recipe in matches %}
+        <div class="recipe-card">
+          <div class="image-wrapper">
+            {% if recipe.image_url %}
+              <a href="/recipe/{{ recipe.id }}">
+                <img src="{{ recipe.image_url }}" alt="{{ recipe.name }}">
+              </a>
+            {% endif %}
+          </div>
+          <div class="title-wrapper">
+            <h3><a href="/recipe/{{ recipe.id }}">{{ recipe.name }}</a></h3>
+          </div>
+          <p>{{ recipe.ingredients.splitlines()[0] if recipe.ingredients else "" }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% elif query %}
+    <p>No recipes found.</p>
+  {% endif %}
+<script>
+  (function () {
+    function focusSearch() {
+      const el = document.getElementById('query');
+      if (el) { el.focus(); el.select(); }
+    }
+    // Fresh loads
+    document.addEventListener('DOMContentLoaded', focusSearch);
+    // Back/forward cache restores (Safari/Chrome sometimes ignore autofocus here)
+    window.addEventListener('pageshow', focusSearch);
+  })();
+</script>
+
+{% endblock %}
+

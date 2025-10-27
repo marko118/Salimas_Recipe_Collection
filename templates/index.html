@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Home - Salima's Recipe Collection{% endblock %}
+
+{% block content %}
+
+<main class="homepage">
+
+  <!-- === Search Box === -->
+  <section class="search-section">
+    <form action="{{ url_for('search') }}" method="get">
+      <input type="text"
+             name="q"
+             placeholder="Search recipes..."
+             autofocus
+             class="search-input">
+    </form>
+  </section>
+
+  <!-- === Quick Tag Buttons === -->
+  <section class="quick-tags">
+    {% for tag in ['chicken', 'pasta', 'vegetarian'] %}
+      <form action="{{ url_for('search') }}" method="get" class="tag-form">
+        <input type="hidden" name="tag" value="{{ tag }}">
+        <button type="submit" class="tag-btn">{{ tag.title() }}</button>
+      </form>
+    {% endfor %}
+  </section>
+
+  <!-- === Tag Cloud === -->
+  <section class="tag-cloud">
+    {% for tag in all_tags %}
+      <a href="{{ url_for('search') }}?tag={{ tag }}" class="tag-link">{{ tag }}</a>
+    {% endfor %}
+  </section>
+
+  <!-- === Recipe Results === -->
+  <section class="recipe-listing">
+    <h3>Recipes tagged “{{ default_tag }}”</h3>
+    {% for r in recipes %}
+      <div class="recipe-row">
+        <button class="select-dish-btn"
+                data-id="{{ r[0] }}"
+                data-name="{{ r[1] }}"></button>
+        <a href="{{ url_for('recipe_detail', recipe_id=r[0]) }}">
+          <strong>{{ r[1] }}</strong>
+        </a>
+      </div>
+    {% endfor %}
+  </section>
+
+</main>
+
+
+<!-- === Select / Clear Logic === -->
+<script>
+  function updateMealCount() {
+    const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+    document.querySelectorAll("#mealCount").forEach(el => {
+      el.textContent = `# Meals selected: ${stored.length}`;
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // Restore selected state
+    const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+    stored.forEach(sel => {
+      const btn = document.querySelector(`.select-dish-btn[data-id='${sel.id}']`);
+      if (btn) btn.classList.add("selected");
+    });
+
+    updateMealCount();
+
+    // Toggle select / deselect
+    document.addEventListener("click", e => {
+      if (!e.target.classList.contains("select-dish-btn")) return;
+      const btn = e.target;
+      const id = btn.dataset.id;
+      const name = btn.dataset.name;
+      let stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+
+      const exists = stored.find(r => r.id == id);
+      if (exists) {
+        stored = stored.filter(r => r.id != id);
+        btn.classList.remove("selected");
+      } else {
+        stored.push({ id, name });
+        btn.classList.add("selected");
+      }
+
+      localStorage.setItem("selectedRecipes", JSON.stringify(stored));
+      updateMealCount();
+    });
+
+    // Double-tap clear logic (no popups)
+    const clearBtn = document.getElementById("clearSelectedBtn");
+    if (clearBtn) {
+      let lastTap = 0;
+      clearBtn.addEventListener("click", () => {
+        const now = Date.now();
+        if (now - lastTap < 800) {
+          localStorage.removeItem("selectedRecipes");
+          updateMealCount();
+          document.querySelectorAll(".select-dish-btn").forEach(btn => {
+            btn.classList.remove("selected");
+          });
+          clearBtn.textContent = "✅ Cleared";
+          setTimeout(() => (clearBtn.textContent = "Clear Selections"), 1500);
+        } else {
+          clearBtn.textContent = "Tap again to confirm";
+          setTimeout(() => (clearBtn.textContent = "Clear Selections"), 1200);
+        }
+        lastTap = now;
+      });
+    }
+  });
+</script>
+
+{% endblock %}

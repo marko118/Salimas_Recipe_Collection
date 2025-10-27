@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ name }}{% endblock %}
+
+{% block content %}
+<div class="recipe-detail">
+
+  <!-- === Image and Title === -->
+  {% if image_url %}
+    <img src="{{ image_url }}" alt="{{ name }}" class="recipe-image">
+  {% endif %}
+
+  <div class="recipe-header">
+    <button class="select-dish-btn"
+            data-id="{{ id }}"
+            data-name="{{ name }}"></button>
+    <h2 class="recipe-title">{{ name }}</h2>
+  </div>
+
+  <!-- === Tags === -->
+  {% if tags %}
+    <div class="recipe-tags">
+      {% for t in tags.split(',') %}
+        <span class="tag-pill small">{{ t.strip() }}</span>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- === Linked URL + Notes === -->
+  {% if linked_recipe %}
+    <p class="recipe-link">
+      🔗 <a href="{{ linked_recipe }}" target="_blank">View full recipe online</a>
+    </p>
+  {% endif %}
+
+  {% if notes %}
+    <div class="recipe-notes">
+      <h3>Notes</h3>
+      <p>{{ notes }}</p>
+    </div>
+  {% endif %}
+
+  <!-- === Ingredients === -->
+  <h3>Ingredients</h3>
+  <ul class="ingredients-list">
+    {% for it in ingredients %}
+      <li>{{ it }}</li>
+    {% endfor %}
+  </ul>
+
+  <!-- === Method === -->
+  <h3>Method</h3>
+  <div class="method-text">
+    {{ method | replace('\n','<br>') | safe }}
+  </div>
+
+  <!-- === Actions === -->
+  <div class="recipe-actions">
+    <a href="/edit/{{ id }}" class="btn btn-edit">✏️ Edit</a>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+  const btn = document.querySelector(".select-dish-btn");
+  const id = btn.dataset.id;
+  if (stored.find(r => r.id == id)) btn.classList.add("selected");
+});
+
+document.addEventListener("click", e => {
+  if (!e.target.classList.contains("select-dish-btn")) return;
+  const btn = e.target;
+  const id = btn.dataset.id;
+  const name = btn.dataset.name;
+  let stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+  const exists = stored.find(r => r.id == id);
+  if (exists) {
+    stored = stored.filter(r => r.id != id);
+    btn.classList.remove("selected");
+  } else {
+    stored.push({ id, name });
+    btn.classList.add("selected");
+  }
+  localStorage.setItem("selectedRecipes", JSON.stringify(stored));
+  if (window.updateMealCount) window.updateMealCount();
+});
+</script>
+{% endblock %}

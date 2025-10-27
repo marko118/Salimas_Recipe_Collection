@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}All Recipes{% endblock %}
+{% block content %}
+  <h2>All Recipes</h2>
+
+  <div class="recipe-list">
+    {% for r in recipes %}
+      <div class="recipe-card">
+
+        <!-- Fixed-height image area -->
+        <div class="image-wrapper">
+          {% if r.image_url %}
+            <a href="{{ url_for('recipe_detail', recipe_id=r.id) }}">
+              <img src="{{ r.image_url }}" alt="{{ r.name }}">
+            </a>
+          {% endif %}
+        </div>
+
+        <!-- ✅ Fixed-height title zone -->
+        <div class="title-wrapper">
+          <h3><a href="{{ url_for('recipe_detail', recipe_id=r.id) }}">{{ r.name }}</a></h3>
+        </div>
+
+        <!-- ✅ Select Dish button -->
+        <button class="select-dish-btn"
+                data-id="{{ r.id }}"
+                data-name="{{ r.name }}"
+                style="margin:0.5em 0; padding:0.3em 0.8em;">
+          ➕ Select Dish
+        </button>
+
+        {% if r.tags %}
+          <div class="recipe-tags">
+            {% for t in r.tags.split(',') %}
+              <span>{{ t }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- ✅ Local JS to manage selections -->
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // refresh all buttons based on stored selections
+    const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+    stored.forEach(sel => {
+      const btn = document.querySelector(`.select-dish-btn[data-id='${sel.id}']`);
+      if (btn) btn.textContent = "✔ Selected";
+    });
+  });
+
+  document.addEventListener("click", e => {
+    if (!e.target.classList.contains("select-dish-btn")) return;
+    const btn = e.target;
+    const id = btn.dataset.id;
+    const name = btn.dataset.name;
+    let stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+
+    const exists = stored.find(r => r.id == id);
+    if (exists) {
+      stored = stored.filter(r => r.id != id);
+      btn.textContent = "➕ Select Dish";
+    } else {
+      stored.push({ id, name });
+      btn.textContent = "✔ Selected";
+    }
+
+    localStorage.setItem("selectedRecipes", JSON.stringify(stored));
+    if (window.updateMealCount) window.updateMealCount();
+  });
+  </script>
+
+{% endblock %}

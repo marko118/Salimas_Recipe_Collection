@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Salima's Recipes{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- === Site Header === -->
+  <header class="site-header">
+    <h1 class="site-title">
+      <a href="/">🍲 Salima's Recipes</a>
+    </h1>
+
+    <nav class="site-nav">
+      <a href="/add">Add</a> |
+      <a href="{{ url_for('admin_tags') }}">Manage Tags</a> |
+      <a href="{{ url_for('planner') }}">Planner</a>
+    </nav>
+  </header>
+
+  <!-- === Control Space (light teal section below header) === -->
+  <div id="control-space" class="control-space">
+    <button id="clearSelectedBtn" class="btn-clear">Clear Selections</button>
+    <span id="mealCount" class="meal-count"># Meals selected: 0</span>
+  </div>
+
+  <!-- === Main Page Content === -->
+  
+    {% block content %}{% endblock %}
+  
+
+  <!-- === Footer === -->
+  <footer class="site-footer">
+    &copy; {{ 2025|default(2025) }} Salima's Recipes
+  </footer>
+
+  <!-- === Global JS: Meal Counter + Clear Logic === -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+      // --- Update all visible meal counters ---
+      const updateCount = () => {
+        const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+        document.querySelectorAll("#mealCount").forEach(el => {
+          el.textContent = `# Meals selected: ${stored.length}`;
+        });
+      };
+      window.updateMealCount = updateCount;
+      updateCount();
+
+      // --- Double-tap Clear Selections button ---
+      const clearBtn = document.getElementById("clearSelectedBtn");
+      if (clearBtn) {
+        let waiting = false;
+
+        clearBtn.addEventListener("click", () => {
+          if (!waiting) {
+            // First tap → confirm prompt
+            clearBtn.textContent = "Tap again to confirm";
+            clearBtn.classList.add("btn-waiting");
+            waiting = true;
+            setTimeout(() => {
+              clearBtn.textContent = "Clear Selections";
+              clearBtn.classList.remove("btn-waiting");
+              waiting = false;
+            }, 2500);
+            return;
+          }
+
+          // Second tap → actually clear
+          localStorage.removeItem("selectedRecipes");
+          document.querySelectorAll(".select-dish-btn").forEach(btn => {
+            btn.classList.remove("selected");
+          });
+          updateCount();
+
+          // Flash green feedback
+          clearBtn.textContent = "Cleared!";
+          clearBtn.classList.add("btn-cleared");
+          setTimeout(() => {
+            clearBtn.textContent = "Clear Selections";
+            clearBtn.classList.remove("btn-cleared");
+          }, 1500);
+
+          waiting = false;
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>

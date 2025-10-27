@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Meal & Shopping Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+/* === Salima's Meal & Shopping Planner — Notebook Edition === */
+
+/* === Base notebook background === */
+body {
+  font-family: 'Patrick Hand', cursive;
+  margin: 0;
+  padding: 2em;
+  font-size: 18px;
+  line-height: 24px; /* aligns roughly with ruled lines */
+  letter-spacing: 0.2px;
+  color: #1a4ca3; /* blue ink tone */
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #fafafa 0px,
+      #fafafa 23px,
+      #e2ebff 24px
+    ),
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.03) 100%);
+  background-attachment: fixed;
+  background-blend-mode: normal;
+}
+
+/* === Optional notebook details === */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 6%;
+  width: 2px;
+  height: 100%;
+  background: rgba(255, 0, 0, 0.25); /* faint red margin line */
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0.8%;
+  width: 12px;
+  height: 100%;
+  background-image: radial-gradient(circle at 6px 12px, rgba(0,0,0,0.15) 2px, transparent 3px);
+  background-size: 12px 24px;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* === Sections & layout === */
+main, section, .page {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  position: relative;
+  z-index: 1;
+  padding: 1.5em 2em;
+  margin: 2em auto;
+  max-width: 1100px;
+}
+
+/* === Category boxes === */
+#shopping-categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1em;
+  margin-top: 1em;
+}
+.category {
+  background: transparent;
+  border: 1px dashed rgba(150,150,200,0.4);
+  border-radius: 8px;
+  padding: 0.8em;
+}
+.category h3 {
+  margin: 0 0 0.3em;
+  font-weight: normal;
+  font-size: 1.1em;
+  border-bottom: 2px solid #d7e2fa;
+}
+/* Remove browser default list padding inside category boxes */
+.category ul,
+.item-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* === Shopping list item layout (final alignment) === */
+.item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3em;
+  line-height: 1.2;
+  flex-wrap: nowrap;
+  margin: 0;
+  padding: 0;
+}
+
+/* Align the label group (checkbox + text) perfectly with category title */
+.item-row label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  left: 0px; /* 🔧 main alignment control — move left until title & checkbox align */
+}
+
+/* Checkbox: keep natural spacing once label is shifted */
+.item-row input[type="checkbox"] {
+  margin: 0;
+  padding: 0;
+  transform: translateY(1px);
+  flex-shrink: 0;
+}
+
+
+/* Label holds checkbox + text, inherits same left padding as .category */
+.item-row label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  white-space: nowrap;
+  margin: 0;
+  padding-left: 0; /* remove any default padding */
+}
+
+/* Checkbox perfectly aligned to left border of category content */
+.item-row input[type="checkbox"] {
+  margin: 0;
+  padding: 0;
+  position: relative;
+  left: -2px;  /* visually aligns with category title text */
+  top: 1px;
+  flex-shrink: 0;
+}
+
+.item-name {
+  flex: 1;
+  color: #1a3e91;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Amount field inside box, not outside */
+.amount-input {
+  flex-shrink: 0;
+  width: 3ch;
+  min-width: 2ch;
+  max-width: 5ch;
+  margin-left: 0.5em;
+  text-align: center;
+  border: none;
+  background: transparent;
+  color: #1a3e91;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.9em;
+  opacity: 0.98;
+}
+
+/* Keep add-item consistent */
+.add-item,
+.add-item::placeholder {
+  color: #1a3e91 !important;
+  opacity: 1 !important;
+  font-family: 'Patrick Hand', cursive;
+}
+
+
+/* === Hand-drawn blue biro style checkboxes === */
+input[type="checkbox"] {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  margin-right: 6px;
+  vertical-align: middle;
+
+  border: 1.8px solid #1a4ca3;
+  border-radius: 3px;
+  background: transparent;
+
+  transform: rotate(-0.8deg);
+  filter: blur(0.15px) contrast(0.96) brightness(0.97);
+  box-shadow:
+    0.4px 0.4px 0 rgba(0,0,0,0.25),
+    inset 0 0 0.6px rgba(26,76,163,0.4);
+}
+
+/* === Tick mark — sharper, asymmetric, longer flick === */
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 7px;       /* start higher and further right */
+  top: -8px;       /* raises the tick slightly */
+  width: 7px;      /* shorter first stroke */
+  height: 20px;    /* longer overall flick */
+  border-right: 2px solid #1a4ca3;
+  border-bottom: 2px solid #1a4ca3;
+  transform: rotate(52deg);   /* more acute angle */
+  border-radius: 0.5px;
+  opacity: 0.95;
+  filter: blur(0.25px) contrast(0.96);
+}
+
+
+/* === Add-item & input fields (ink style) === */
+.add-item,
+.amount-input,
+select,
+input[type="text"] {
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  color: #1a4ca3 !important;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1em;
+  padding: 2px 4px;
+  border-radius: 0;
+  box-shadow: none !important;
+}
+
+.add-item:focus,
+.amount-input:focus,
+select:focus,
+input[type="text"]:focus {
+  border-bottom: 1px dotted rgba(26,76,163,0.5);
+  background: rgba(255,255,255,0.1);
+}
+
+.add-item::placeholder,
+input[type="text"]::placeholder,
+.amount-input::placeholder {
+  color: rgba(26, 76, 163, 0.6);
+  font-family: 'Patrick Hand', cursive;
+  opacity: 1;
+}
+
+/* === Buttons === */
+button, .btn {
+  font-family: inherit;
+  border: 1px solid #888;
+  border-radius: 8px;
+  background: #f7f7ff;
+  padding: 0.4em 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button:hover { background: #e5e5ff; }
+
+/* === Suggestion dropdown === */
+.suggest-dropdown {
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  border: 1px solid #ccc;
+  z-index: 999;
+}
+.suggest-dropdown div { padding: 4px 6px; cursor: pointer; }
+.suggest-dropdown div:hover { background: #eef; }
+
+/* === Responsive 4-day planner grid === */
+.planner-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.2em;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .planner-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .planner-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .planner-grid { grid-template-columns: repeat(2, 1fr); }
+}
+/* === Meals grid layout === */
+.meal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1em;
+  margin-top: 1em;
+}
+.meal {
+  border: 1px dashed rgba(26, 76, 163, 0.3);
+  border-radius: 6px;
+  padding: 0.8em;
+  background: transparent;
+}
+
+.day-cell {
+  border: 1.5px dashed rgba(26, 76, 163, 0.4);
+  border-radius: 6px;
+  background: transparent;
+  padding: 0.8em;
+  min-height: 160px;
+}
+
+
+#listOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,0.96);
+  overflow-y: auto;
+  padding: 2rem;
+  font-family: 'Patrick Hand', cursive;
+  z-index: 2000;           /* ⬅ ensure it sits on top of everything */
+}
+/* Hide the rest of the planner when the list overlay is visible */
+body.overlay-active main,
+body.overlay-active section {
+  display: none !important;
+}
+
+body.overlay-active #listOverlay {
+  display: block !important;
+}
+
+
+
+/* === Print mode cleanup === */
+@media print {
+  body * { visibility: hidden !important; }
+  #listOverlay, #listOverlay * { visibility: visible !important; }
+  #listOverlay {
+    position: static !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+</style>
+
+</head>
+<body>
+
+<!-- SHOPPING -->
+<section id="shopping">
+  <div class="section-header">
+    <h2 style="margin:0;">🛒 Shopping List</h2>
+    <button id="generateListBtn" class="header-btn">🧾 Generate</button>
+    <button id="clearShoppingBtn" class="header-btn">🧹 Clear</button>
+  </div>
+
+  <div id="shopping-categories">
+    {% set categories = ["Household","Dairy","Produce","Meats","Freezer","Larder","Snacks","Other"] %}
+    {% for cat in categories %}
+      <div class="category" data-cat="{{ cat }}">
+        <h3>{{ cat }}</h3>
+        <ul class="item-list"></ul>
+        <input type="text" class="add-item" placeholder="Add {{ cat|lower }} item...">
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ✅ Visually improved overlay -->
+<div id="listOverlay"
+     style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+            background:rgba(0,0,0,0.6);  /* translucent dark background */
+            padding:2em;overflow:auto;z-index:2000;">
+  <div style="
+      background:#fff;
+      padding:1.5em 2em;
+      border-radius:10px;
+      max-width:600px;
+      margin:8vh auto;
+      box-shadow:0 8px 24px rgba(0,0,0,0.25);
+      font-family:'Patrick Hand', cursive;
+      color:#1a4ca3;
+      line-height:1.4;">
+    <h2 style="text-align:center;margin-top:0;">🧾 Shopping List</h2>
+    <pre id="finalList"
+         style="white-space:pre-wrap;font-size:1.1em;max-height:70vh;overflow-y:auto;"></pre>
+    <div style="margin-top:1.2em;display:flex;gap:.6em;flex-wrap:wrap;justify-content:center;">
+      <button id="copyListBtn">📋 Copy</button>
+      <button id="printListBtn">🖨️ Print</button>
+      <button id="closeOverlay">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MEALS -->
+
+<section id="meals">
+  <div class="section-header">
+    <h2 style="margin:0;">Meals Selected</h2>
+    <button id="addIngredientsBtn" class="header-btn">➕ Add Ingredients</button>
+    <a href="/" class="header-btn" style="text-decoration:none;">⬅️ Return</a>
+  </div>
+
+  <div class="meal-grid">
+    {% for meal in meals %}
+    <div class="meal">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">
+        {% if meal.url %}
+          <a href="{{ meal.url }}" target="_blank" style="color:#333;text-decoration:none;">{{ meal.name }}</a>
+        {% else %}{{ meal.name }}{% endif %}
+        </h3>
+        <button class="remove-meal" data-name="{{ meal.name }}" style="border:none;background:none;color:#a33;cursor:pointer;">✖</button>
+      </div>
+      {% if meal.ingredients %}
+        {% for ing in meal.ingredients %}
+          <div class="item-row">
+            <label style="flex:1;"><input type="checkbox" class="checkbox" checked> {{ ing }}</label>
+            <input type="text" class="amount-input" placeholder="1">
+          </div>
+        {% endfor %}
+      {% else %}
+        <em>No ingredients listed.</em>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+
+<!-- PLANNER -->
+<section id="planner">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+    <h2 style="margin:0;">4-Day Meal Planner</h2>
+    <button id="toggleWeekBtn" class="btn" style="font-size:0.9em;">
+      🔄 Switch to Wed → Sun
+    </button>
+  </div>
+
+  <div class="planner-grid">
+
+    {% set days = ["Sunday","Monday","Tuesday","Wednesday"] %}
+    {% for day in days %}
+    <div class="day-cell">
+      <h3>{{ day }}</h3>
+
+      <label>Lunch:</label>
+      <select class="meal-select">
+        <option value="">None</option>
+        <option>Other...</option>
+      </select>
+      <input type="text" placeholder="Type other meal..." style="display:none">
+
+      <label>Dinner:</label>
+      <select class="meal-select">
+        <option value="">None</option>
+        <option>Other...</option>
+      </select>
+      <input type="text" placeholder="Type other meal..." style="display:none">
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+
+<script>
+/* === Ingredient category detection & learning === */
+const KEYMAP = {
+  Dairy:["milk","cheese","cream","butter","yog","feta","mozzarella"],
+  Produce:["apple","banana","tomato","onion","pepper","carrot","potato","garlic","lettuce","spinach","herb","lemon","lime","mushroom","broccoli"],
+  Meats:["chicken","beef","lamb","ham","bacon","pork","turkey","fish","salmon","tuna","sausage","mince"],
+  Freezer:["frozen","peas","ice","chips","sweetcorn","berries","pizza"],
+  Larder:["bread","rice","pasta","oil","salt","flour","spice","sugar","sauce","tin","jar","stock","broth","cereal"],
+  Snacks:["crisps","bar","chocolate","sweet","biscuit","snack"],
+  Household:["foil","bin","bag","soap","cleaner","towel","roll","paper"]
+};
+let userLearned = JSON.parse(localStorage.getItem("userLearnedCategories") || "{}");
+function detectCategory(name){
+  const lower = name.toLowerCase();
+  if (userLearned[lower]) return userLearned[lower];
+  for (const [cat, words] of Object.entries(KEYMAP)){
+    if (words.some(w => lower.includes(w))) return cat;
+  }
+  return "Larder";
+}
+function learnCategory(name, cat){
+  userLearned[name.toLowerCase()] = cat;
+  localStorage.setItem("userLearnedCategories", JSON.stringify(userLearned));
+}
+</script>
+
+<script>
+/* === Shopping logic (with delete + amounts) === */
+const SHOP_KEY="shoppingCategories",SUGGEST_KEY="shoppingSuggestions",CROSS_KEY="crossedItems";
+const categories=["Household","Dairy","Produce","Meats","Freezer","Larder","Snacks","Other"];
+let shoppingData = JSON.parse(localStorage.getItem(SHOP_KEY) || "{}");
+let suggestionData = JSON.parse(localStorage.getItem(SUGGEST_KEY) || "{}");
+let crossedData = JSON.parse(localStorage.getItem(CROSS_KEY) || "{}");
+
+// define saveAll() before anything uses it
+function saveAll() {
+  localStorage.setItem(SHOP_KEY, JSON.stringify(shoppingData));
+  localStorage.setItem(SUGGEST_KEY, JSON.stringify(suggestionData));
+  localStorage.setItem(CROSS_KEY, JSON.stringify(crossedData));
+}
+
+// make sure every category has an array
+categories.forEach(c => {
+  if (!shoppingData[c]) shoppingData[c] = [];
+  if (!suggestionData[c]) suggestionData[c] = [];
+});
+
+// initial seed of starter items
+function seedStarters() {
+  const starters = ["milk", "bread", "cheese", "apples", "chicken", "pasta", "butter", "toilet roll", "rice", "yogurts"];
+  starters.forEach(name => {
+    const cat = detectCategory(name);
+    shoppingData[cat].push({ name, checked: true, amount: "" });
+    if (!suggestionData[cat].includes(name)) suggestionData[cat].push(name);
+  });
+}
+
+// if everything’s empty, seed and save
+if (categories.every(c => shoppingData[c].length === 0)) {
+  seedStarters();
+  saveAll();
+}
+
+/* === Suggestion dropdown for shopping inputs === */
+document.querySelectorAll(".add-item").forEach(input => {
+  const cat = input.closest(".category").dataset.cat;
+  const dropdown = document.createElement("div");
+  dropdown.className = "suggest-dropdown";
+  dropdown.style.cssText = `
+    position:absolute;background:#fff;border:1px solid #ccc;border-radius:4px;
+    box-shadow:2px 2px 6px rgba(0,0,0,0.15);z-index:999;
+    max-height:140px;overflow-y:auto;display:none;
+    font-family:inherit;font-size:1em;
+  `;
+  document.body.appendChild(dropdown);
+
+  let matches = [], currentIndex = -1;
+
+  function showSuggestions(val) {
+    const list = (suggestionData[cat] || [])
+      .filter(n => n.toLowerCase().includes(val.toLowerCase()))
+      .slice(0, 8);
+    matches = list;
+    currentIndex = -1;
+    if (!list.length) return hideSuggestions();
+    dropdown.innerHTML = list.map(m => `<div>${m}</div>`).join("");
+    const r = input.getBoundingClientRect();
+    dropdown.style.left = r.left + "px";
+    dropdown.style.top = (r.bottom + window.scrollY) + "px";
+    dropdown.style.width = r.width + "px";
+    dropdown.style.display = "block";
+    dropdown.querySelectorAll("div").forEach((div, i) => {
+      div.onmousedown = e => {
+        e.preventDefault();
+        choose(list[i]);
+      };
+    });
+  }
+
+  function hideSuggestions() {
+    dropdown.style.display = "none";
+    dropdown.innerHTML = "";
+  }
+
+function choose(name) {
+  if (!name) return;
+  addItem(name);
+  setTimeout(hideSuggestions, 100); // small delay to allow blur to finish
+}
+
+
+  function addItem(name) {
+    if (!name.trim()) return;
+    learnCategory(name, cat);
+    const exists = shoppingData[cat].some(
+      i => i.name.toLowerCase() === name.toLowerCase()
+    );
+    if (!exists) {
+      shoppingData[cat].push({ name, checked: true, amount: "" });
+      if (!suggestionData[cat].includes(name)) suggestionData[cat].push(name);
+      saveAll(); // ensure persistence immediately
+      renderShopping();
+    }
+    input.value = "";
+  }
+
+  input.addEventListener("input", e => {
+    const val = input.value.trim();
+    if (val) showSuggestions(val);
+    else hideSuggestions();
+  });
+
+  input.addEventListener("keydown", e => {
+    const val = input.value.trim();
+    if (dropdown.style.display === "block" && ["ArrowDown","ArrowUp","Enter"].includes(e.key)) {
+      e.preventDefault();
+      const options = dropdown.querySelectorAll("div");
+      if (e.key === "ArrowDown") currentIndex = (currentIndex + 1) % options.length;
+      else if (e.key === "ArrowUp") currentIndex = (currentIndex - 1 + options.length) % options.length;
+      else if (e.key === "Enter") return choose(matches[currentIndex]);
+      options.forEach((o, i) => o.style.background = i === currentIndex ? "#eef" : "");
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addItem(val);
+      hideSuggestions();
+    } else if (e.key === "Escape") hideSuggestions();
+  });
+
+  input.addEventListener("blur", () => setTimeout(hideSuggestions, 150));
+});
+
+
+
+/* === Render === */
+function renderShopping(){
+  categories.forEach(cat=>{
+    const list=document.querySelector(`.category[data-cat="${cat}"] .item-list`);
+    list.innerHTML="";
+    shoppingData[cat].forEach((item,i)=>{
+      const li=document.createElement("li");
+      li.className="item-row";
+      li.innerHTML=`
+        <label style="flex:1;">
+          <input type="checkbox" class="shop-item" data-cat="${cat}" data-index="${i}" ${item.checked?"checked":""}>
+          <span class="item-name">${item.name}</span>
+        </label>
+        <input type="text" class="amount-input" value="${item.amount||""}" placeholder="1">
+      `;
+      list.appendChild(li);
+    });
+  });
+  attachHandlers();
+}
+function attachHandlers(){
+  document.querySelectorAll(".shop-item").forEach(box=>{
+    box.onchange=()=>{const c=box.dataset.cat,i=box.dataset.index;shoppingData[c][i].checked=box.checked;saveAll();};
+  });
+  document.querySelectorAll(".amount-input").forEach(inp=>{
+    inp.oninput=()=>{const li=inp.closest("li");
+      const cat=li.querySelector(".shop-item").dataset.cat;
+      const idx=li.querySelector(".shop-item").dataset.index;
+      shoppingData[cat][idx].amount=inp.value.trim();saveAll();
+    };
+  });
+  document.querySelectorAll(".item-name").forEach(span=>{
+span.ondblclick = () => {
+  const cat = span.closest(".category").dataset.cat;
+  const idx = [...span.closest("ul").querySelectorAll(".item-name")].indexOf(span);
+  const name = shoppingData[cat][idx].name;
+  if (confirm(`Delete "${name}"?`)) {
+    // remove item from the visible list
+    shoppingData[cat].splice(idx, 1);
+
+    // keep learned categories intact; only remove from suggestions in this category
+    Object.entries(suggestionData).forEach(([c, arr]) => {
+      const pos = arr.indexOf(name);
+      if (pos > -1 && c === cat) arr.splice(pos, 1);
+    });
+
+    saveAll();
+    renderShopping();
+  }
+};
+
+  });
+}
+
+/* === Overlay === */
+document.getElementById("generateListBtn").onclick=()=>{
+  const overlay=document.getElementById("listOverlay");
+  const list=document.getElementById("finalList");
+  list.innerHTML="";
+  let any=false;
+  categories.forEach(cat=>{
+    const needed=shoppingData[cat].filter(i=>i.checked);
+    if(needed.length){
+      any=true;
+      const header=document.createElement("div");
+      header.textContent=cat.toUpperCase()+":";
+      header.style.marginTop="0.8em";header.style.fontWeight="bold";
+      list.appendChild(header);
+      needed.forEach(i=>{
+        const key=cat+"::"+i.name.toLowerCase();
+        const amt=i.amount?` (${i.amount})`:"";
+        const line=document.createElement("div");
+        line.textContent=`• ${i.name}${amt}`;
+        line.style.cursor="pointer";
+        if(crossedData[key]){line.style.textDecoration="line-through";line.style.opacity="0.5";}
+        line.onclick=()=>{
+          crossedData[key]=!crossedData[key];
+          line.style.textDecoration=crossedData[key]?"line-through":"none";
+          line.style.opacity=crossedData[key]?"0.5":"1";
+          saveAll();
+        };
+        list.appendChild(line);
+      });
+    }
+  });
+  if(!any)list.textContent="No items selected.";
+  overlay.style.display = "block";
+  document.body.classList.add("overlay-active");
+};
+
+document.getElementById("closeOverlay").onclick = () => {
+  document.getElementById("listOverlay").style.display = "none";
+  document.body.classList.remove("overlay-active");
+};
+/* === Reliable print: clean one-page output === */
+document.getElementById("printListBtn").onclick = () => {
+  const overlay = document.getElementById("listOverlay");
+  const content = overlay.querySelector("#finalList").innerHTML;
+
+  const win = window.open("", "printWindow", "width=600,height=800");
+  win.document.write(`
+    <html>
+      <head>
+        <title>Shopping List</title>
+        <style>
+          @page { margin: 0; }
+          html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: auto;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1.1em;
+            line-height: 1.3;
+            color: #000;
+            background: #fff;
+          }
+          h2 {
+            text-align: center;
+            margin: 0.6em 0 0.4em;
+          }
+          .wrapper {
+            padding: 1cm;
+          }
+          div {
+            margin: 0.15em 0;
+            page-break-inside: avoid;
+          }
+          .category {
+            font-weight: bold;
+            margin-top: 0.5em;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="wrapper">
+          <h2>🧾 Shopping List</h2>
+          <div>${content}</div>
+        </div>
+      </body>
+    </html>
+  `);
+  win.document.close();
+  win.focus();
+  win.print();
+  setTimeout(() => win.close(), 500);
+};
+
+
+
+
+
+/* === Clear === */
+document.getElementById("clearShoppingBtn").onclick = () => {
+if (confirm("Clear all current shopping list items?\n(Your saved suggestions will stay)")) {
+  // reload current suggestion memory before saving anything
+  const savedSuggestions = localStorage.getItem(SUGGEST_KEY);
+  const savedLearned = localStorage.getItem("userLearnedCategories");
+
+  // clear only shopping list and crossed items
+  shoppingData = {};
+  crossedData = {};
+  categories.forEach(c => { shoppingData[c] = []; });
+
+  // write the cleared shopping list, then restore remembered data
+  saveAll();
+  if (savedSuggestions) localStorage.setItem(SUGGEST_KEY, savedSuggestions);
+  if (savedLearned) localStorage.setItem("userLearnedCategories", savedLearned);
+
+  // repopulate starter items immediately
+  seedStarters();
+
+  renderShopping();
+  hideAllDropdowns();
+  localStorage.removeItem("weeklyPlannerMeals");
+}
+};
+
+
+/* === Add ingredients from meals === */
+document.getElementById("addIngredientsBtn").onclick=()=>{
+  const ings=[...document.querySelectorAll("#meals .meal .checkbox")].map(b=>b.nextSibling.textContent.trim()).filter(Boolean);
+  let added=0;
+  ings.forEach(item=>{
+    const name=item.toLowerCase();
+    const cat=detectCategory(name);
+    const exists=shoppingData[cat].some(i=>i.name.toLowerCase()===name);
+    if(!exists){
+      shoppingData[cat].push({name:item,checked:true,amount:""});
+      learnCategory(name,cat);
+      if(!suggestionData[cat].includes(item))suggestionData[cat].push(item);
+      added++;
+    }
+  });
+  saveAll();renderShopping();
+  alert(`✅ Added ${added} new ingredients to the shopping list.`);
+};
+/* === Remove meal cards === */
+document.querySelectorAll(".remove-meal").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const card = btn.closest(".meal");
+    card.remove(); // instantly hides the card
+  });
+});
+/* === Hide already-used meals in planner === */
+function updateAvailableMeals() {
+  const chosen = Array.from(document.querySelectorAll(".meal-select"))
+    .map(sel => sel.value)
+    .filter(v => v && v !== "Other...");
+
+  document.querySelectorAll(".meal-select").forEach(sel => {
+    const current = sel.value;
+    for (const opt of sel.options) {
+      if (
+        opt.value &&
+        opt.value !== "Other..." &&
+        opt.value !== "" &&
+        opt.value !== current
+      ) {
+        opt.hidden = chosen.includes(opt.value);
+      } else {
+        opt.hidden = false;
+      }
+    }
+  });
+}
+// auto-expand amount boxes to the left
+document.addEventListener("input", e => {
+  if (e.target.classList.contains("amount-input")) {
+    e.target.style.width = Math.max(1, e.target.value.length) + "ch";
+  }
+});
+
+/* === Init === */
+renderShopping();
+// --- Planner: hook change events and save ---
+document.querySelectorAll(".meal-select").forEach(sel => {
+  sel.addEventListener("change", () => {
+    const txt = sel.nextElementSibling;
+    txt.style.display = sel.value === "Other..." ? "block" : "none";
+    updateAvailableMeals();
+    savePlanner();
+  });
+});
+
+// === Load selected dishes and render them in the Meals section ===
+document.addEventListener("DOMContentLoaded", async () => {
+  const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+  if (!stored.length) return; // nothing selected yet
+
+  const ids = stored.map(r => r.id).join(",");
+  try {
+    const res = await fetch(`/api/selected?ids=${ids}`);
+    const data = await res.json();
+    const meals = data.meals || [];
+
+    const container = document.querySelector(".meal-grid");
+    container.innerHTML = "";
+
+    meals.forEach(m => {
+      const mealDiv = document.createElement("div");
+      mealDiv.className = "meal";
+      mealDiv.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;">
+            <a href="${m.url}" target="_blank" style="color:#333;text-decoration:none;">${m.name}</a>
+          </h3>
+          <button class="remove-meal" data-id="${m.id}" style="border:none;background:none;color:#a33;cursor:pointer;">✖</button>
+        </div>
+        ${m.ingredients.length
+          ? m.ingredients.map(i =>
+              `<div class='item-row'><label style='flex:1;'><input type='checkbox' class='checkbox' checked> ${i}</label><input type='text' class='amount-input' placeholder='1'></div>`
+            ).join("")
+          : "<em>No ingredients listed.</em>"
+        }
+      `;
+      container.appendChild(mealDiv);
+    });
+  } catch (err) {
+    console.error("Failed to load selected dishes", err);
+  }
+});
+// === Populate planner dropdowns with only selected dishes ===
+document.addEventListener("DOMContentLoaded", () => {
+  const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+  if (!stored.length) return;
+  const selects = document.querySelectorAll(".meal-select");
+  selects.forEach(sel => {
+    stored.forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r.name;
+      opt.textContent = r.name;
+      sel.insertBefore(opt, sel.querySelector("option[value='Other...']"));
+    });
+  });
+});
+
+
+// === Week toggle (Sun-Wed ↔ Wed-Sun) ===
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("toggleWeekBtn");
+  const plannerGrid = document.querySelector(".planner-grid");
+
+  btn.addEventListener("click", () => {
+    const forward = plannerGrid.dataset.order !== "wed";
+    // Replace the day headers
+    const days = forward
+      ? ["Wednesday","Thursday","Friday","Saturday","Sunday"]
+      : ["Sunday","Monday","Tuesday","Wednesday"];
+    plannerGrid.dataset.order = forward ? "wed" : "sun";
+    btn.textContent = forward ? "🔄 Switch to Sun → Wed" : "🔄 Switch to Wed → Sun";
+
+    // Rebuild the grid with new day labels
+    const cells = days.map(d => {
+      return `
+        <div class="day-cell">
+          <h3>${d}</h3>
+          <label>Lunch:</label>
+          <select class="meal-select"><option value="">None</option><option>Other...</option></select>
+          <input type="text" placeholder="Type other meal..." style="display:none">
+          <label>Dinner:</label>
+          <select class="meal-select"><option value="">None</option><option>Other...</option></select>
+          <input type="text" placeholder="Type other meal..." style="display:none">
+        </div>`;
+    });
+    plannerGrid.innerHTML = cells.join("");
+
+    // Repopulate the new dropdowns with selected dishes
+    const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+    const selects = document.querySelectorAll(".meal-select");
+    selects.forEach(sel => {
+      stored.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.name;
+        opt.textContent = r.name;
+        sel.insertBefore(opt, sel.querySelector("option[value='Other...']"));
+      });
+    });
+  });
+});
+
+
+</script>
+</body>
+</html>

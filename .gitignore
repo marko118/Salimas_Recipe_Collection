@@ -1,0 +1,7 @@
+
+# Ignore local runtime files
+__pycache__/
+*.pyc
+recipes.db
+venv/
+
