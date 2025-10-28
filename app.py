@@ -283,6 +283,78 @@ def lexical_hit(query: str, name: str, ingredients: str, method: str) -> bool:
 
     return False
 
+from collections import Counter
+import json
+import re
+
+from collections import Counter
+import json
+import re
+
+def get_tag_cloud():
+    """Return a dict of {tag: count} for all recipes, cleaned and normalized."""
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute("SELECT tags FROM recipes")
+        rows = c.fetchall()
+
+    all_tags = []
+
+    # Common normalizations / synonyms
+    normalize_map = {
+        "soups": "soup",
+        "salads": "salad",
+        "fish & seafood": "seafood",
+        "seafood & fish": "seafood",
+        "pasta dishes": "pasta",
+        "curries": "curry",
+        "desserts": "dessert",
+        "cakes": "cake",
+        "cookies": "cookie",
+        "breads": "bread",
+    }
+
+    for row in rows:
+        raw = row[0]
+        if not raw:
+            continue
+
+        tags = []
+
+        # --- Try JSON decode first ---
+        if raw.strip().startswith("["):
+            try:
+                decoded = json.loads(raw)
+                if isinstance(decoded, list):
+                    tags = decoded
+                elif isinstance(decoded, str):
+                    tags = [decoded]
+            except Exception:
+                cleaned = raw.strip("[]'\" ")
+                tags = re.split(r"[,;]", cleaned)
+        else:
+            tags = re.split(r"[,;]", raw)
+
+        # --- Normalize ---
+        cleaned_tags = []
+        for t in tags:
+            t = re.sub(r'[^a-zA-Z0-9 &-]', '', t).strip().lower()
+            if not t:
+                continue
+            # singularize simple plurals (quick heuristic)
+            if t.endswith("s") and len(t) > 3:
+                t = t[:-1]
+            # apply synonym map
+            if t in normalize_map:
+                t = normalize_map[t]
+            cleaned_tags.append(t)
+
+        all_tags.extend(cleaned_tags)
+
+    counts = Counter(all_tags)
+    return sorted(counts.items(), key=lambda x: x[0])
+
+
 # ---------------------------
 # Routes
 # ---------------------------
@@ -470,10 +542,16 @@ def index():
         # show recipes tagged 'chicken' by default
         c.execute("SELECT id, name, ingredients FROM recipes WHERE tags LIKE ?", (f'%{default_tag}%',))
         recipes = c.fetchall()
-        # load all tags for the tag cloud
-        c.execute("SELECT DISTINCT name FROM tags ORDER BY name")
-        all_tags = [row[0] for row in c.fetchall()]
-    return render_template("index.html", recipes=recipes, all_tags=all_tags, default_tag=default_tag)
+                # Load tag counts for the tag cloud
+        tag_cloud = get_tag_cloud()
+
+    return render_template(
+        "index.html",
+        recipes=recipes,
+        tag_cloud=tag_cloud,
+        default_tag=default_tag
+    )
+
 @app.route("/search")
 def search():
     q = request.args.get("q", "").strip()
@@ -501,16 +579,16 @@ def search():
             c.execute("SELECT id, name, ingredients, tags FROM recipes ORDER BY name")
         results = c.fetchall()
 
-        # For the tag cloud on search pages
-        c.execute("SELECT DISTINCT name FROM tags ORDER BY name")
-        all_tags = [row[0] for row in c.fetchall()]
+                # For the tag cloud on search pages
+        tag_cloud = get_tag_cloud()
 
     return render_template(
         "index.html",
         recipes=results,
-        all_tags=all_tags,
+        tag_cloud=tag_cloud,
         default_tag=tag or q or "Results"
     )
+
 
 @app.route("/planner")
 def planner():

@@ -26,12 +26,18 @@
     {% endfor %}
   </section>
 
-  <!-- === Tag Cloud === -->
+    <!-- === Tag Cloud === -->
   <section class="tag-cloud">
-    {% for tag in all_tags %}
-      <a href="{{ url_for('search') }}?tag={{ tag }}" class="tag-link">{{ tag }}</a>
+    {% for tag, count in tag_cloud %}
+      {% set size = 0.9 + (count * 0.04) %}
+      <a href="{{ url_for('search') }}?tag={{ tag }}"
+         class="tag-link"
+         style="font-size: {{ size }}em;">
+         {{ tag }}
+      </a>
     {% endfor %}
   </section>
+
 
   <!-- === Recipe Results === -->
   <section class="recipe-listing">
