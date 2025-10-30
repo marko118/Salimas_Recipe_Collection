@@ -2,88 +2,108 @@
 {% block title %}{{ name }}{% endblock %}
 
 {% block content %}
-<div class="recipe-detail">
+<main class="homepage">
+  <div class="recipe-detail">
 
-  <!-- === Image and Title === -->
-  {% if image_url %}
-    <img src="{{ image_url }}" alt="{{ name }}" class="recipe-image">
-  {% endif %}
+    <!-- === Title + Select Button === -->
+    <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1rem;">
+      <button class="select-dish-btn"
+              data-id="{{ id }}"
+              data-name="{{ name }}"
+              style="transform:scale(1.5);">
+      </button>
+      <h2 class="recipe-title"
+          style="margin:0; font-size:1.9rem; color:#1a2c5b; text-align:left;">
+        {{ name }}
+      </h2>
+    </div>
 
-  <div class="recipe-header">
-    <button class="select-dish-btn"
-            data-id="{{ id }}"
-            data-name="{{ name }}"></button>
-    <h2 class="recipe-title">{{ name }}</h2>
-  </div>
+    <!-- === Optional Recipe Link === -->
+    {% if linked_recipe %}
+      <div style="margin-bottom:1rem; text-align:left;">
+        <strong>Recipe Link:</strong>
+        <a href="{{ linked_recipe }}" target="_blank" rel="noopener"
+           style="color:#0a8274; word-break:break-all;">
+          {{ linked_recipe }}
+        </a>
+      </div>
+    {% endif %}
 
-  <!-- === Tags === -->
-  {% if tags %}
-    <div class="recipe-tags">
-      {% for t in tags.split(',') %}
-        <span class="tag-pill small">{{ t.strip() }}</span>
+    <!-- === Ingredients + Image side by side === -->
+<div class="content-row">
+  <div class="ingredients-column">
+    <h3>Ingredients</h3>
+    <ul class="ingredients-list">
+      {% for it in ingredients %}
+        <li>{{ it }}</li>
       {% endfor %}
-    </div>
-  {% endif %}
-
-  <!-- === Linked URL + Notes === -->
-  {% if linked_recipe %}
-    <p class="recipe-link">
-      🔗 <a href="{{ linked_recipe }}" target="_blank">View full recipe online</a>
-    </p>
-  {% endif %}
-
-  {% if notes %}
-    <div class="recipe-notes">
-      <h3>Notes</h3>
-      <p>{{ notes }}</p>
-    </div>
-  {% endif %}
-
-  <!-- === Ingredients === -->
-  <h3>Ingredients</h3>
-  <ul class="ingredients-list">
-    {% for it in ingredients %}
-      <li>{{ it }}</li>
-    {% endfor %}
-  </ul>
-
-  <!-- === Method === -->
-  <h3>Method</h3>
-  <div class="method-text">
-    {{ method | replace('\n','<br>') | safe }}
+    </ul>
   </div>
 
-  <!-- === Actions === -->
-  <div class="recipe-actions">
-    <a href="/edit/{{ id }}" class="btn btn-edit">✏️ Edit</a>
+  {% if image_url %}
+  <div class="image-column">
+    <img src="{{ image_url }}" alt="{{ name }}" class="recipe-image">
   </div>
-
+  {% endif %}
 </div>
 
+
+
+    <!-- === Notes === -->
+    {% if notes %}
+      <div style="margin-top:1.2rem; padding:0.8rem 1rem; background:#f9f9f9;
+                  border-left:4px solid #87d6d4; border-radius:6px; text-align:left;">
+        <strong>Notes:</strong>
+        <div style="margin-top:0.4rem; white-space:pre-line;">{{ notes }}</div>
+      </div>
+    {% endif %}
+
+    <!-- === Method === -->
+    <h3 style="margin-top:1.5rem; text-align:left;">Method</h3>
+    <div class="method-text"
+         style="white-space:pre-line; line-height:1.6; text-align:left;">
+      {{ method }}
+    </div>
+
+    <!-- === Tags === -->
+    {% if tags %}
+      <div class="recipe-tags" style="margin-top:1.5rem; text-align:left;">
+        {% for t in tags.split(',') %}
+          <span class="tag-pill"
+                style="display:inline-block; background:#0a8274; color:#fff;
+                       border-radius:14px; padding:0.3rem 0.8rem;
+                       font-size:0.9rem; margin:0.2rem;">
+            {{ t.strip() }}
+          </span>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</main>
+
+<!-- === JS: toggle selected === -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
   const btn = document.querySelector(".select-dish-btn");
-  const id = btn.dataset.id;
-  if (stored.find(r => r.id == id)) btn.classList.add("selected");
-});
+  if (!btn) return;
 
-document.addEventListener("click", e => {
-  if (!e.target.classList.contains("select-dish-btn")) return;
-  const btn = e.target;
+  const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
   const id = btn.dataset.id;
-  const name = btn.dataset.name;
-  let stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
-  const exists = stored.find(r => r.id == id);
-  if (exists) {
-    stored = stored.filter(r => r.id != id);
-    btn.classList.remove("selected");
-  } else {
-    stored.push({ id, name });
-    btn.classList.add("selected");
-  }
-  localStorage.setItem("selectedRecipes", JSON.stringify(stored));
-  if (window.updateMealCount) window.updateMealCount();
+  if (stored.find(r => r.id == id)) btn.textContent = "✔ Selected";
+
+  btn.addEventListener("click", () => {
+    let list = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+    const exists = list.find(r => r.id == id);
+    if (exists) {
+      list = list.filter(r => r.id != id);
+      btn.textContent = "➕ Select Dish";
+    } else {
+      list.push({ id, name: btn.dataset.name });
+      btn.textContent = "✔ Selected";
+    }
+    localStorage.setItem("selectedRecipes", JSON.stringify(list));
+    if (window.updateMealCount) window.updateMealCount();
+  });
 });
 </script>
 {% endblock %}

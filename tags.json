@@ -12,7 +12,9 @@
     "Salmon",
     "Seafood",
     "Avocado",
-    "Cheese"
+    "Cheese",
+    "Fish & Seafood",
+    "Pork & Other"
   ],
   "Type": [
     "Main",
@@ -22,7 +24,12 @@
     "Bread",
     "Dessert",
     "Brunch",
-    "Sauce"
+    "Sauce",
+    "Baked",
+    "Curry",
+    "Stir-fry",
+    "Wrap",
+    "Cake"
   ],
   "Other": [
     "Slow cooker",
@@ -30,11 +37,25 @@
     "Easy",
     "Tricky",
     "Overnight",
-    "Large group"
+    "Large group",
+    "To try.........."
   ],
   "Occasion": [
     "Christmas",
     "Chinese",
     "Sunday"
+  ],
+  "Quick Access": [
+    "Favourites",
+    "Easy Lunch",
+    "Brekkie",
+    "Snacks"
+  ],
+  "Chef": [
+    "nagi",
+    "bbc good food",
+    "jamie oliver",
+    "hairy bikers",
+    "olive magazine"
   ]
 }
