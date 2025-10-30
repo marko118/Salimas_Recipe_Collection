@@ -229,150 +229,119 @@ button:hover { background: var(--brand-dark); }
   to   { opacity: 1; transform: scale(1.35); }
 }
 
-/* ===== Header, Nav, and Control Space ===== */
+/* ===== Header & Nav ===== */
 .site-header {
   background: var(--brand);
-  color: var(--brand-dark);
+  color: #fff;
   text-align: center;
-  padding: 1rem 0;
+  padding: 0.25rem 0;              /* compact vertical height */
 }
-.site-title a { color: white; text-decoration: none; }
+.site-title a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.8rem;
+  line-height: 1.2;
+}
+
+.site-nav {
+  background: var(--brand);
+  text-align: center;
+  padding: 0.25rem 0.4rem;
+}
 .site-nav a {
   color: var(--brand-dark);
-  margin: 0 0.5rem;
+  margin: 0 0.6rem;
   font-weight: 600;
+  text-decoration: none;
 }
-.site-nav a:hover { color: #ffeb3b; }
+.site-nav a:hover {
+  color: #ffeb3b;
+}
 
 /* ===== Control Space ===== */
 .control-space {
   position: sticky;
-  top: 2.4rem; /* sits just below nav */
+  top: 2.6rem;                    /* sits below nav */
   z-index: 90;
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 0.6rem;
+  align-items: center;            /* ensures vertical alignment */
+  gap: 0.8rem;
   flex-wrap: wrap;
   background: var(--background);
   padding: 0.35rem 0.6rem;
-  margin: 0 auto 0.25rem;
+  margin: 0 auto 0.4rem;
   max-width: 900px;
-  border-radius: 5px;
   border-bottom: 1px solid rgba(0,0,0,0.05);
-  
+  border-radius: 5px;
 }
-/* === Joined Search Bar + Show Cloud Button === */
-.search-form {
+
+/* --- Shared button look --- */
+.btn-clear,
+.btn-toggle-cloud {
   display: inline-flex;
-  align-items: center;       /* centers both vertically */
-  gap: 30px;                    /* no horizontal gap */
-  vertical-align: middle;
-}
-
-.search-input {
-  width: 50%;
-  max-width: 400px;
-  height: 2.4rem;            /* lock consistent height */
-  padding: 0 0.8rem;         /* smaller vertical padding */
-  font-size: 0.95rem;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  line-height: 1;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
   border: 1px solid #bbb;
-  border-right: none;        /* visually join with button */
-  border-radius: 8px 0 0 8px;
-  background: #fff;
-  line-height: 1.2rem;
-  box-sizing: border-box;    /* keep dimensions consistent */
-  transition: border 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.1s ease;
 }
 
+/* --- Cloud button --- */
+.btn-toggle-cloud {
+  background: var(--brand);
+  color: #fff;
+  position: relative;
+  top: 1px;                      /* slight visual nudge down */
+}
+.btn-toggle-cloud:hover {
+  background: var(--brand-dark);
+  transform: scale(1.05);
+}
+.btn-toggle-cloud.active {
+  background: #00b35f;
+}
+
+/* --- Clear button --- */
+.btn-clear {
+  background: #fff;
+  color: var(--brand-dark);
+}
+.btn-clear:hover {
+  background: #f0f0f0;
+  color: #0a8274;
+}
+
+/* ===== Search Bar ===== */
+.search-section {
+  text-align: center;
+  margin: 0.4rem 0 0.6rem;
+}
+.search-input {
+  width: 100%;
+  max-width: 720px;
+  padding: 0.55rem 1rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+  background: #fff;
+  box-sizing: border-box;
+}
 .search-input:focus {
   border-color: var(--brand-dark);
   box-shadow: 0 0 0 1.5px rgba(10,130,116,0.2);
   outline: none;
 }
 
-.btn-toggle-cloud {
-  height: 2.3rem;                  /* keep same total height */
-  padding: 0 1rem 0.1rem 1rem;     /* slight bottom pad fix */
-  font-size: 0.9rem;
-  line-height: 1;                  /* centers text vertically */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  color: var(--brand-dark);
-  border: 1px solid #bbb;
-  border-radius: 0 8px 8px 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-sizing: border-box;
-}
-.btn-toggle-cloud {
-  position: relative;
-  top: -4px;     /* lift the button box up by 1 pixel */
-}
-
-.btn-toggle-cloud:hover {
-  background: var(--brand);
-  color: #fff;
-  border-color: var(--brand-dark);
-}
-
-.btn-toggle-cloud.active {
-  background: var(--brand-dark);
-  color: #fff;
-  border-color: var(--brand-dark);
-}
-
-
-
-
-/* ===== Clear button + count ===== */
-.btn-clear {
-  font-size: 1rem;
-  padding: 0.5rem 1.2rem;
-  border: 1px solid #888;
-  border-radius: 8px;
-  background: #fff;
-  color: var(--brand-dark);
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.25s ease, color 0.25s ease;
-}
-.btn-clear:hover { background: #f0f0f0; color: #0a8274; }
-.meal-count {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--brand-dark);
-}
-
-/* === Toggle Tag Cloud Button === */
-#toggleTagsBtn {
-  background: #fff;
-  border: 1px solid #888;
-  border-radius: 8px;
-  color: var(--brand-dark);
-  font-weight: 600;
-  padding: 0.5rem 1.2rem;
-  cursor: pointer;
-  transition: background 0.25s ease, color 0.25s ease, transform 0.15s ease;
-}
-
-#toggleTagsBtn:hover {
-  background: var(--brand);
-  color: white;
-  transform: translateY(-1px);
-}
-
-#toggleTagsBtn.active {
-  background: var(--brand-dark);
-  color: white;
-}
-
-
-/* Feedback states */
+/* ===== Feedback states ===== */
 .btn-waiting { background: #f6c343 !important; color: #000; }
 .btn-cleared { background: #0a8274 !important; color: #fff; }
+
 
 /* ===== Homepage layout ===== */
 main.homepage {
@@ -389,9 +358,9 @@ main.homepage {
   text-align: center;
 }
 .search-input {
-  width: 65%;
-  max-width: 520px;
-  padding: 0.55rem 0.9rem;
+  width: 100%;
+  max-width: 400px;
+  padding: 0.55rem 8rem;
   font-size: 1rem;
   border-radius: 8px;
   border: 1px solid #bbb;
@@ -435,6 +404,24 @@ main.homepage {
   border-color: var(--brand-dark);
   
 }
+.btn-toggle-cloud {
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.btn-toggle-cloud:hover {
+  background: var(--brand-dark);
+  transform: scale(1.05);
+}
+.btn-toggle-cloud.active {
+  background: #00b35f;
+}
+
 
 /* === Tag Cloud Styles and Reveal Animation === */
 .tag-cloud {
@@ -536,3 +523,47 @@ main.homepage {
   border-bottom: 1px solid rgba(0,0,0,0.1);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);  /* subtle depth */
 }
+/* ===== Select Dish Button (Recipe Detail Page) ===== */
+
+/* --- Select Dish Button --- */
+.select-dish-btn {
+  all: unset;                         /* wipe every inherited style */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  vertical-align: middle;
+  margin-right: 0.4rem;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.select-dish-btn .icon {
+  font-size: 1.4rem;
+  color: #888;                        /* grey + */
+  transition: color 0.2s ease;
+  line-height: 1;
+}
+
+/* --- Only remove system styling on the recipe detail select button --- */
+.recipe-detail .select-dish-btn,
+.recipe-detail .select-dish-btn::before,
+.recipe-detail .select-dish-btn::after {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  content: none !important;
+}
+
+/* hover: teal icon only, no shape */
+.select-dish-btn:hover .icon {
+  color: var(--brand-dark);
+}
+
+/* selected: green tick icon */
+.select-dish-btn.selected .icon {
+  color: #00b35f;
+}
+

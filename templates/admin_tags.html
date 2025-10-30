@@ -2,38 +2,150 @@
 {% block title %}Manage Tags{% endblock %}
 
 {% block content %}
-  <main class="homepage">
-    <h2>Manage Tag Groups</h2>
+<main class="homepage">
 
-    <form method="post" class="admin-tags-form" style="max-width:800px; margin:auto;">
+  <h2 style="text-align:center;">Manage Tag Groups</h2>
+
+  <form id="tagForm" method="post" class="admin-tags-form">
+    <div class="tag-grid">
       {% for group_name, items in tags_dict.items() %}
-        <fieldset style="margin-bottom:1.5rem; background:#fff; border:1px solid #ccc; border-radius:8px; padding:1rem;">
-          <legend style="font-weight:600; color:#0a8274;">{{ group_name }}</legend>
-          <p class="hint" style="font-size:0.9rem; color:#666;">One tag per line (commas also allowed).</p>
+        <fieldset class="tag-card">
+          <legend>
+            {% if group_name|lower == "chef" %}Source{% else %}{{ group_name }}{% endif %}
+          </legend>
+          <p class="hint">One tag per line (commas also allowed).</p>
           <textarea name="group_{{ group_name | replace(' ', '_') }}"
-                    rows="6"
-                    style="width:100%; border-radius:6px; border:1px solid #bbb; padding:0.6rem; font-size:1rem;">{{ "\n".join(items) }}</textarea>
+                    rows="6">{{ "\n".join(items) }}</textarea>
         </fieldset>
       {% endfor %}
 
       <!-- === Add a New Tag Group === -->
-      <fieldset style="margin-top:1rem; background:#f8f8f8; border:1px dashed #bbb; border-radius:8px; padding:1rem;">
-        <legend style="font-weight:600; color:#555;">➕ Add New Tag Group</legend>
+      <fieldset class="tag-card add-card">
+        <legend>➕ Add New Group</legend>
         <input type="text"
                name="new_group_name"
-               placeholder="e.g. Quick Access"
-               style="width:60%; padding:0.5rem; border:1px solid #ccc; border-radius:6px; font-size:1rem;">
+               placeholder="e.g. Quick Access">
       </fieldset>
+    </div>
+  </form>
+</main>
 
-      <div style="text-align:center; margin-top:1.5rem;">
-        <button type="submit" style="padding:0.7rem 1.4rem; border-radius:8px; background:#0a8274; color:#fff; border:none; cursor:pointer;">
-          💾 Save Changes
-        </button>
-      </div>
-    </form>
+<style>
+/* --- Admin Tags Grid Layout --- */
+.admin-tags-form {
+  width: 100%;
+  max-width: 1100px;
+  margin: auto;
+  padding: 1rem;
+}
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.tag-card {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+}
+.tag-card legend {
+  font-weight: 600;
+  color: var(--brand-dark);
+  margin-bottom: 0.5rem;
+}
+.tag-card .hint {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0 0 0.4rem;
+}
+.tag-card textarea {
+  flex: 1;
+  resize: vertical;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  padding: 0.6rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  min-height: 6rem;
+  max-height: 20rem;
+  overflow-y: auto;
+}
+.add-card {
+  background: #f8f8f8;
+  border: 1px dashed #bbb;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.add-card input {
+  width: 90%;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+@media (max-width: 600px) {
+  .tag-card textarea { font-size: 0.9rem; }
+}
+</style>
 
-    <p style="margin-top:1.5rem; text-align:center;">
-      <a href="{{ url_for('recipe_list_home') }}" style="color:#0a8274; text-decoration:none;">← Back to recipes</a>
-    </p>
-  </main>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // === integrate Save button into global control space ===
+  const controlSpace = document.getElementById("control-space");
+  if (controlSpace && !document.getElementById("saveBtn")) {
+    const saveBtn = document.createElement("button");
+    saveBtn.id = "saveBtn";
+    saveBtn.textContent = "💾 Save Changes";
+    saveBtn.className = "btn-edit";
+    saveBtn.type = "button"; // prevent normal form submit
+    controlSpace.insertBefore(saveBtn, controlSpace.firstChild);
+  }
+
+  const saveBtn = document.getElementById("saveBtn");
+  const form = document.getElementById("tagForm");
+
+  // --- helper to POST form data via fetch
+  async function saveTags() {
+    saveBtn.textContent = "💾 Saving...";
+    saveBtn.style.background = "#0a8274";
+    saveBtn.style.color = "#fff";
+
+    try {
+      const formData = new FormData(form);
+      const res = await fetch(form.action || window.location.pathname, {
+        method: "POST",
+        body: formData
+      });
+
+      if (!res.ok) throw new Error(res.statusText);
+
+      // success animation + redirect
+      saveBtn.textContent = "✅ Saved!";
+      saveBtn.style.background = "#00b35f";
+      saveBtn.style.color = "#fff";
+      setTimeout(() => { window.location.href = "/"; }, 1000);
+    } catch (err) {
+      console.error("Save failed:", err);
+      saveBtn.textContent = "⚠️ Error";
+      saveBtn.style.background = "#c33";
+      saveBtn.style.color = "#fff";
+      setTimeout(() => {
+        saveBtn.textContent = "💾 Save Changes";
+        saveBtn.style.background = "";
+        saveBtn.style.color = "";
+      }, 1500);
+    }
+  }
+
+  if (saveBtn && form) {
+    saveBtn.addEventListener("click", saveTags);
+  }
+});
+</script>
+
 {% endblock %}

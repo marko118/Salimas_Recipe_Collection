@@ -3,20 +3,45 @@
 
 {% block content %}
 <main class="homepage">
-  <div class="recipe-detail">
+  <div class="recipe-detail" style="max-width:900px; margin:auto; background:#fff; border-radius:10px; padding:1.5rem; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
 
-    <!-- === Title + Select Button === -->
-    <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1rem;">
+    <!-- === Title + Select === -->
+    <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem; flex-wrap:wrap;">
       <button class="select-dish-btn"
-              data-id="{{ id }}"
-              data-name="{{ name }}"
-              style="transform:scale(1.5);">
-      </button>
-      <h2 class="recipe-title"
-          style="margin:0; font-size:1.9rem; color:#1a2c5b; text-align:left;">
+        data-id="{{ id }}"
+        data-name="{{ name }}"
+        aria-label="Select this recipe">
+  <span class="icon"></span>
+</button>
+
+
+      <h2 class="recipe-title" style="margin:0; font-size:1.9rem; color:#1a2c5b; text-align:left;">
         {{ name }}
       </h2>
     </div>
+
+    <!-- === Tags (clickable) === -->
+    {% if tags %}
+      <div class="recipe-tags" style="margin:0.5rem 0 1rem; display:flex; flex-wrap:wrap; gap:0.4rem;">
+        {% for t in tags.split(',') %}
+          {% set tag_clean = t.strip() %}
+          <a href="{{ url_for('search') }}?tag={{ tag_clean }}"
+             class="tag-pill"
+             style="
+               display:inline-block;
+               background: var(--brand-dark);
+               color:#fff;
+               border-radius:14px;
+               padding:0.35rem 0.8rem;
+               font-size:0.9rem;
+               font-weight:500;
+               text-decoration:none;
+               transition:background 0.2s ease;">
+             {{ tag_clean }}
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
 
     <!-- === Optional Recipe Link === -->
     {% if linked_recipe %}
@@ -30,24 +55,22 @@
     {% endif %}
 
     <!-- === Ingredients + Image side by side === -->
-<div class="content-row">
-  <div class="ingredients-column">
-    <h3>Ingredients</h3>
-    <ul class="ingredients-list">
-      {% for it in ingredients %}
-        <li>{{ it }}</li>
-      {% endfor %}
-    </ul>
-  </div>
+    <div class="content-row" style="display:flex; flex-wrap:wrap; gap:1.5rem; align-items:flex-start;">
+      <div class="ingredients-column" style="flex:1; min-width:260px;">
+        <h3>Ingredients</h3>
+        <ul class="ingredients-list" style="margin-top:0.4rem;">
+          {% for it in ingredients %}
+            <li>{{ it }}</li>
+          {% endfor %}
+        </ul>
+      </div>
 
-  {% if image_url %}
-  <div class="image-column">
-    <img src="{{ image_url }}" alt="{{ name }}" class="recipe-image">
-  </div>
-  {% endif %}
-</div>
-
-
+      {% if image_url %}
+      <div class="image-column" style="flex:0 0 220px; text-align:center;">
+        <img src="{{ image_url }}" alt="{{ name }}" class="recipe-image" style="width:100%; max-width:220px; border-radius:8px;">
+      </div>
+      {% endif %}
+    </div>
 
     <!-- === Notes === -->
     {% if notes %}
@@ -65,45 +88,74 @@
       {{ method }}
     </div>
 
-    <!-- === Tags === -->
-    {% if tags %}
-      <div class="recipe-tags" style="margin-top:1.5rem; text-align:left;">
-        {% for t in tags.split(',') %}
-          <span class="tag-pill"
-                style="display:inline-block; background:#0a8274; color:#fff;
-                       border-radius:14px; padding:0.3rem 0.8rem;
-                       font-size:0.9rem; margin:0.2rem;">
-            {{ t.strip() }}
-          </span>
-        {% endfor %}
-      </div>
-    {% endif %}
   </div>
 </main>
 
-<!-- === JS: toggle selected === -->
+<!-- === JS: Selection + Edit button injection === -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+  // --- Toggle dish selection (final, type-safe + debug) ---
   const btn = document.querySelector(".select-dish-btn");
-  if (!btn) return;
+  if (btn) {
+    const icon = btn.querySelector(".icon");
+    const id = String(btn.dataset.id).trim();
+    const name = btn.dataset.name;
 
-  const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
-  const id = btn.dataset.id;
-  if (stored.find(r => r.id == id)) btn.textContent = "✔ Selected";
+    const getList = () => {
+      try {
+        return JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+      } catch (e) {
+        console.warn("Failed to parse selectedRecipes:", e);
+        return [];
+      }
+    };
 
-  btn.addEventListener("click", () => {
-    let list = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
-    const exists = list.find(r => r.id == id);
-    if (exists) {
-      list = list.filter(r => r.id != id);
-      btn.textContent = "➕ Select Dish";
-    } else {
-      list.push({ id, name: btn.dataset.name });
-      btn.textContent = "✔ Selected";
-    }
-    localStorage.setItem("selectedRecipes", JSON.stringify(list));
-    if (window.updateMealCount) window.updateMealCount();
-  });
+    const saveList = (list) => {
+      localStorage.setItem("selectedRecipes", JSON.stringify(list));
+    };
+
+    const updateState = () => {
+      const list = getList();
+      const isSelected = list.some(r => String(r.id).trim() === id);
+      btn.classList.toggle("selected", isSelected);
+      icon.textContent = isSelected ? "✔" : "➕";
+      console.log("Recipe ID:", id, "Selected:", isSelected, "Stored IDs:", list.map(r => r.id));
+    };
+
+    // Initialize state on load
+    updateState();
+
+    btn.addEventListener("click", () => {
+      let list = getList();
+      const exists = list.some(r => String(r.id).trim() === id);
+      if (exists) {
+        list = list.filter(r => String(r.id).trim() !== id);
+      } else {
+        list.push({ id, name });
+      }
+      saveList(list);
+      updateState();
+      if (window.updateMealCount) window.updateMealCount();
+    });
+  }
+
+  // --- Move Edit button into control-space (unchanged) ---
+  const controlSpace = document.getElementById("control-space");
+  if (controlSpace && !document.getElementById("editBtn")) {
+    const editBtn = document.createElement("a");
+    editBtn.id = "editBtn";
+    editBtn.href = "{{ url_for('edit_recipe', recipe_id=id) }}";
+    editBtn.className = "btn-danger";
+    editBtn.textContent = "✏️ Edit";
+    editBtn.style.padding = "0.6rem 1.2rem";
+    editBtn.style.borderRadius = "8px";
+    editBtn.style.fontWeight = "600";
+    editBtn.style.textDecoration = "none";
+    const clearBtn = document.getElementById("clearSelectedBtn");
+    controlSpace.insertBefore(editBtn, clearBtn);
+  }
 });
 </script>
+
+
 {% endblock %}

@@ -4,146 +4,188 @@
 {% block content %}
 <main class="homepage">
 
-  <!-- === Controls at the top (under nav) === -->
-  <div class="control-space"
-       style="margin-bottom:1rem; display:flex; flex-wrap:wrap; justify-content:center; gap:0.5rem;">
-    <!-- ✅ Button explicitly linked to form below -->
-    <button type="submit" form="addForm" class="btn-edit" id="saveRecipeBtn">💾 Save Recipe</button>
-    <a href="/" class="btn-clear">Cancel</a>
-  </div>
-
   <!-- === Add Recipe Card === -->
   <div class="recipe-edit"
-       style="max-width:900px; margin:auto; background:#fff; border-radius:10px;
-              padding:1.5rem; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+       style="max-width:900px;margin:auto;background:#fff;border-radius:10px;
+              padding:1.5rem;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
 
-    <h2 style="margin-top:0; color:#1a2c5b;">➕ Add New Recipe</h2>
+    <h2 style="margin-top:0;color:#1a2c5b;text-align:center;">➕ Add New Recipe</h2>
 
-    <!-- ✅ Make sure form id matches the button’s “form” attribute -->
+    <!-- === Form === -->
     <form id="addForm" method="post" action="{{ url_for('add_recipe') }}"
-          style="display:flex; flex-direction:column; gap:1rem;">
+          style="display:flex;flex-direction:column;gap:1rem;">
 
+      <!-- === Compact Info Grid === -->
+<div class="info-grid"
+     style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+            gap:1rem;align-items:start;">
+  <div>
+    <label><strong>Name</strong></label>
+    <input name="name" required placeholder="e.g. Tagliatelle Carbonara"
+           style="width:100%;padding:0.5rem;border:1px solid #bbb;border-radius:6px;">
+  </div>
+  <div>
+    <label><strong>Recipe Link</strong></label>
+    <input type="text" name="linked_recipe" placeholder="https://example.com"
+           style="width:100%;padding:0.5rem;border:1px solid #bbb;border-radius:6px;">
+  </div>
 
-      <!-- Basic fields -->
-      <label><strong>Name</strong></label>
-      <input name="name" placeholder="e.g. Tagliatelle Carbonara" required
-             style="padding:0.6rem; border:1px solid #bbb; border-radius:6px;">
+  <!-- === Image URL + Inline Preview === -->
+  <div style="display:flex;align-items:flex-start;gap:0.6rem;flex-wrap:nowrap;">
+    <div style="flex:1;">
+      <label><strong>Image URL</strong></label>
+      <input type="text" name="image_url" id="imageURL"
+             placeholder="https://example.com/photo.jpg"
+             style="width:100%;padding:0.5rem;border:1px solid #bbb;border-radius:6px;">
+    </div>
+    <div id="imagePreview"
+     style="flex:0 0 100px; text-align:center; margin-left:2rem;">
+  <div class="preview-box"
+       style="width:100px; height:100px; background:#f0f0f0; border-radius:6px;
+              display:flex; align-items:center; justify-content:center;
+              color:#aaa; font-size:0.8rem;">
+    No image
+  </div>
+</div>
 
-      <label><strong>Recipe Link (optional)</strong></label>
-      <input type="text" name="linked_recipe" placeholder="https://example.com"
-             style="padding:0.6rem; border:1px solid #bbb; border-radius:6px;">
+  </div>
+</div>
 
-      <label><strong>Image URL (optional)</strong></label>
-      <input name="image_url" placeholder="https://example.com/photo.jpg"
-             style="padding:0.6rem; border:1px solid #bbb; border-radius:6px;">
+<style>
+/* Hide preview entirely on narrow screens */
+@media (max-width: 700px) {
+  #imagePreview { display:none !important; }
+}
+</style>
 
-      <!-- Ingredients + Image preview side by side -->
-      <div style="display:flex; flex-wrap:wrap; gap:1.5rem; justify-content:center; align-items:flex-start;">
-        <div style="flex:1; min-width:260px;">
-          <label><strong>Ingredients (one per line)</strong></label>
-          <textarea name="ingredients" rows="6"
-                    placeholder="e.g.\n200 g penne\n2 cloves garlic\n1 cup milk"
-                    style="width:100%; border:1px solid #bbb; border-radius:6px;
-                           padding:0.6rem; resize:vertical;"></textarea>
-        </div>
+      <!-- === Ingredients === -->
+      <label><strong>Ingredients (one per line)</strong></label>
+      <textarea name="ingredients" rows="5"
+                placeholder="200 g penne\n2 cloves garlic\n1 cup milk"
+                style="width:100%;border:1px solid #bbb;border-radius:6px;
+                       padding:0.6rem;resize:vertical;min-height:100px;"></textarea>
 
-        <div style="flex:0 0 220px; text-align:center;">
-          <div id="imagePreview"
-               style="width:100%; max-width:220px; height:140px; background:#f0f0f0;
-                      border-radius:8px; display:flex; align-items:center;
-                      justify-content:center; color:#aaa;">
-            No image
-          </div>
-        </div>
-      </div>
-
+      <!-- === Method === -->
       <label><strong>Method</strong></label>
-      <textarea name="method" rows="8" placeholder="Step-by-step instructions..."
-                style="width:100%; border:1px solid #bbb; border-radius:6px;
-                       padding:0.6rem; resize:vertical;"></textarea>
+      <textarea name="method" rows="6"
+                placeholder="Step-by-step instructions..."
+                style="width:100%;border:1px solid #bbb;border-radius:6px;
+                       padding:0.6rem;resize:vertical;min-height:120px;"></textarea>
 
-      <!-- Tag groups will go here next -->
-      <!-- === Tags Section === -->
-<h3 style="margin-top:1rem;">Tags</h3>
-
-{% if tags_dict %}
-  <div class="tag-groups" style="display:flex; flex-wrap:wrap; gap:1rem;">
-    {% for group_name, tag_list in tags_dict.items() %}
-      <fieldset style="border:1px solid #ddd; border-radius:8px; padding:0.8rem; min-width:200px; flex:1;">
-        <legend style="font-weight:600;">{{ group_name }}</legend>
-        <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
-          {% for t in tag_list %}
-            <label style="cursor:pointer;">
-              <input type="checkbox" name="tags" value="{{ t }}" style="display:none;">
-              <span class="tag-pill" style="
-                    display:inline-block;
-                    padding:0.35rem 0.8rem;
-                    border-radius:16px;
-                    border:1px solid #0a8274;
-                    color:#0a8274;
-                    background:#fff;
-                    font-size:0.85rem;
-                    transition:all 0.2s ease;">
-                {{ t }}
-              </span>
-            </label>
+      <!-- === Tags (unchanged) === -->
+      <h3 style="margin-top:1rem;">Tags</h3>
+      {% if tags_dict %}
+        <div class="tag-groups" style="display:flex;flex-wrap:wrap;gap:1rem;">
+          {% for group_name, tag_list in tags_dict.items() %}
+            <fieldset style="border:1px solid #ddd;border-radius:8px;
+                             padding:0.8rem;min-width:200px;flex:1;">
+              <legend style="font-weight:600;">{{ group_name }}</legend>
+              <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+                {% for t in tag_list %}
+                  <label style="cursor:pointer;">
+                    <input type="checkbox" name="tags" value="{{ t }}" style="display:none;">
+                    <span class="tag-pill" style="
+                          display:inline-block;padding:0.35rem 0.8rem;
+                          border-radius:16px;border:1px solid #0a8274;
+                          color:#0a8274;background:#fff;font-size:0.85rem;
+                          transition:all 0.2s ease;">{{ t }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            </fieldset>
           {% endfor %}
         </div>
-      </fieldset>
-    {% endfor %}
-  </div>
-{% else %}
-  <p style="color:#777;">No tags defined yet. Use “Manage Tags” to create groups.</p>
-{% endif %}
+      {% else %}
+        <p style="color:#777;">No tags defined yet. Use “Manage Tags” to create groups.</p>
+      {% endif %}
 
-<p style="margin-top:1rem;">
-  <strong>Extra tags (comma-separated):</strong><br>
-  <input type="text" name="extra_tags" placeholder="e.g. spicy, family-favourite"
-         style="width:100%; border:1px solid #bbb; border-radius:6px; padding:0.6rem;">
-</p>
-
-
+      <p style="margin-top:1rem;">
+        <strong>Extra tags (comma-separated):</strong><br>
+        <input type="text" name="extra_tags" placeholder="e.g. spicy, family-favourite"
+               style="width:100%;border:1px solid #bbb;border-radius:6px;padding:0.6rem;">
+      </p>
     </form>
   </div>
 
-  <script>
-    // Live image preview
-    const imageInput = document.querySelector('input[name="image_url"]');
-    const imagePreview = document.getElementById('imagePreview');
-    if (imageInput && imagePreview) {
-      imageInput.addEventListener('input', () => {
-        const url = imageInput.value.trim();
-        if (url) {
-          imagePreview.innerHTML = '';
-          const img = document.createElement('img');
-          img.src = url;
-          img.style.width = '100%';
-          img.style.maxWidth = '220px';
-          img.style.borderRadius = '8px';
-          imagePreview.replaceChildren(img);
-        } else {
-          imagePreview.textContent = 'No image';
-          imagePreview.style.background = '#f0f0f0';
-        }
-      });
-    }
+  <!-- === Scripts === -->
+<script>
+  // --- Live image preview ---
+  const imageInput = document.querySelector('input[name="image_url"]');
+  const imagePreview = document.getElementById('imagePreview');
+  if (imageInput && imagePreview) {
+    imageInput.addEventListener('input', () => {
+      const url = imageInput.value.trim();
+      if (url) {
+        imagePreview.innerHTML =
+          `<img src="${url}" alt="Preview"
+                style="max-width:180px;border-radius:6px;">`;
+      } else {
+        imagePreview.innerHTML =
+          `<div style="width:100%;max-width:180px;height:100px;margin:auto;
+                       background:#f0f0f0;border-radius:6px;display:flex;
+                       align-items:center;justify-content:center;color:#aaa;">
+             No image
+           </div>`;
+      }
+    });
+  }
 
-    // === Tag pill toggle behaviour ===
+  // --- Tag pill toggle (unchanged) ---
   document.querySelectorAll('.tag-groups label').forEach(label => {
     const checkbox = label.querySelector('input[type="checkbox"]');
     const pill = label.querySelector('.tag-pill');
     label.addEventListener('click', e => {
       e.preventDefault();
       checkbox.checked = !checkbox.checked;
-      if (checkbox.checked) {
-        pill.style.background = '#0a8274';
-        pill.style.color = '#fff';
-      } else {
-        pill.style.background = '#fff';
-        pill.style.color = '#0a8274';
-      }
+      pill.style.background = checkbox.checked ? '#0a8274' : '#fff';
+      pill.style.color = checkbox.checked ? '#fff' : '#0a8274';
     });
   });
-  </script>
+
+  // --- Add Save + Cancel into global control space ---
+  window.addEventListener("load", () => {
+    const formEl = document.getElementById("addForm");
+    const cs = document.getElementById("control-space");
+    const clearBtn = document.getElementById("clearSelectedBtn");
+
+    console.log("form:", !!formEl, "control-space:", !!cs);
+
+    if (!formEl || !cs || !clearBtn) return;
+
+    // Cancel button
+    if (!document.getElementById("cancelBtn")) {
+      const cancelBtn = document.createElement("a");
+      cancelBtn.id = "cancelBtn";
+      cancelBtn.href = "/";
+      cancelBtn.textContent = "✖ Cancel";
+      cancelBtn.className = "btn-danger";
+      cancelBtn.style.padding = "0.6rem 1.2rem";
+      cancelBtn.style.borderRadius = "8px";
+      cancelBtn.style.fontWeight = "600";
+      cancelBtn.style.textDecoration = "none";
+      cs.insertBefore(cancelBtn, clearBtn);
+    }
+
+    // Save button
+    if (!document.getElementById("saveBtn")) {
+      const saveBtn = document.createElement("button");
+      saveBtn.id = "saveBtn";
+      saveBtn.textContent = "💾 Save";
+      saveBtn.className = "btn-edit";
+      saveBtn.type = "submit";
+      saveBtn.style.padding = "0.6rem 1.2rem";
+      saveBtn.style.borderRadius = "8px";
+      saveBtn.style.fontWeight = "600";
+      saveBtn.style.cursor = "pointer";
+
+      cs.insertBefore(saveBtn, clearBtn);
+      saveBtn.setAttribute("form", "addForm"); // safer, works in all browsers
+
+      console.log("Form linked via setAttribute:", saveBtn.getAttribute("form"));
+    }
+  });
+  
+</script>
+
 </main>
 {% endblock %}
