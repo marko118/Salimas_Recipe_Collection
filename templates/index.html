@@ -16,27 +16,35 @@
     </form>
   </section>
 
-  <!-- === Quick Tag Buttons === -->
-  <section class="quick-tags">
-    {% for tag in ['chicken', 'pasta', 'vegetarian'] %}
+  <!-- === Quick Access Tag Buttons (from tags.json) === -->
+<section class="quick-tags">
+  {% if quick_access %}
+    {% for tag in quick_access %}
       <form action="{{ url_for('search') }}" method="get" class="tag-form">
         <input type="hidden" name="tag" value="{{ tag }}">
-        <button type="submit" class="tag-btn">{{ tag.title() }}</button>
+        <button type="submit" class="tag-btn">{{ tag }}</button>
       </form>
     {% endfor %}
-  </section>
+  {% else %}
+    <p style="text-align:center; color:#777;">No Quick Access tags defined yet.</p>
+  {% endif %}
+</section>
+
+
 
     <!-- === Tag Cloud === -->
   <section class="tag-cloud">
-    {% for tag, count in tag_cloud %}
-      {% set size = 0.9 + (count * 0.04) %}
-      <a href="{{ url_for('search') }}?tag={{ tag }}"
-         class="tag-link"
-         style="font-size: {{ size }}em;">
-         {{ tag }}
-      </a>
-    {% endfor %}
-  </section>
+  {% for tag, count in tag_cloud %}
+    {% set size = 0.9 + (count * 0.04) %}
+    {% set color = 100 - (count * 8) %}
+    <a href="{{ url_for('search') }}?tag={{ tag }}"
+       class="tag-link"
+       style="font-size: {{ size }}em; color: hsl({{ color }}, 60%, 40%);">
+       {{ tag }}
+    </a>
+  {% endfor %}
+</section>
+
 
 
   <!-- === Recipe Results === -->

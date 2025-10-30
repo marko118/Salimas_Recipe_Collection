@@ -21,6 +21,7 @@ footer {
   padding: 1rem;
   text-align: center;
 }
+
 /* --- Don't apply teal background to inner headers --- */
 .recipe-header {
   background: none;
@@ -28,7 +29,6 @@ footer {
   padding: 0;
   text-align: left;
 }
-
 
 /* Remove default main padding (outer main removed) */
 main {
@@ -46,22 +46,7 @@ a {
   text-decoration: none;
   transition: color 0.2s ease;
 }
-a:hover {
-  color: var(--brand);
-}
-
-/* ===== Header navigation ===== */
-header nav a {
-  color: var(--brand-dark);
-  text-decoration: none;
-  margin: 0 0.75rem;
-  font-weight: 600;
-  transition: color 0.2s ease;
-}
-header nav a:hover {
-  color: #ffeb3b;
-  text-decoration: underline;
-}
+a:hover { color: var(--brand); }
 
 /* ===== Forms ===== */
 form input,
@@ -85,9 +70,7 @@ button {
   cursor: pointer;
   transition: background 0.2s ease;
 }
-button:hover {
-  background: var(--brand-dark);
-}
+button:hover { background: var(--brand-dark); }
 
 /* ===== Delete button ===== */
 .btn-danger {
@@ -97,9 +80,7 @@ button:hover {
   border-radius: 6px;
   transition: background 0.2s ease;
 }
-.btn-danger:hover {
-  background: #c0392b;
-}
+.btn-danger:hover { background: #c0392b; }
 
 /* ===== Recipe cards ===== */
 .recipe-card {
@@ -117,7 +98,6 @@ button:hover {
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
-
 .tag-groups fieldset {
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -125,12 +105,15 @@ button:hover {
   background: #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
-
 .tag-groups legend {
   font-weight: 600;
   padding: 0 0.5rem;
 }
-
+.tag-box {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
 .tag-box label {
   display: flex;
   justify-content: space-between;
@@ -139,19 +122,9 @@ button:hover {
   padding: 0 0.3rem;
   font-size: 0.95rem;
 }
-
-/* Checkbox styling */
-.tag-box input[type="checkbox"] {
-  accent-color: var(--brand);
-}
+.tag-box input[type="checkbox"] { accent-color: var(--brand); }
 
 /* ===== Clickable tag pills ===== */
-.tag-box {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.5rem;
-}
-
 .tag-pill {
   display: inline-block;
   padding: 0.4rem 0.8rem;
@@ -225,24 +198,14 @@ button:hover {
   align-items: center;
   justify-content: center;
 }
-/* === Detail page: larger + icon, no background box on hover === */
-.recipe-header .select-dish-btn {
-  width: 2rem;
-  height: 2rem;
-}
-
-.recipe-header .select-dish-btn::before {
-  font-size: 2.2rem; /* bigger plus for large title */
-}
-
-/* Remove green background flash or focus ring */
+.recipe-header .select-dish-btn { width: 2rem; height: 2rem; }
+.recipe-header .select-dish-btn::before { font-size: 2.2rem; }
 .recipe-header .select-dish-btn:hover,
 .recipe-header .select-dish-btn:focus,
 .recipe-header .select-dish-btn:active {
   background: none !important;
   box-shadow: none !important;
 }
-
 .select-dish-btn::before {
   content: "+";
   color: #aaa;
@@ -266,7 +229,7 @@ button:hover {
   to   { opacity: 1; transform: scale(1.35); }
 }
 
-/* ===== Header and Control Space ===== */
+/* ===== Header, Nav, and Control Space ===== */
 .site-header {
   background: var(--brand);
   color: var(--brand-dark);
@@ -274,7 +237,6 @@ button:hover {
   padding: 1rem 0;
 }
 .site-title a { color: white; text-decoration: none; }
-.site-nav { margin-bottom: 0.5rem; }
 .site-nav a {
   color: var(--brand-dark);
   margin: 0 0.5rem;
@@ -282,24 +244,26 @@ button:hover {
 }
 .site-nav a:hover { color: #ffeb3b; }
 
-/* --- Control Space --- */
+/* ===== Control Space ===== */
 .control-space {
+  position: sticky;
+  top: 2.4rem; /* sits just below nav */
+  z-index: 90;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
-  background: #dff6f5;
-  border-top: 1px solid #c8e8e6;
-  border-bottom: 1px solid #c8e8e6;
+  background: var(--background);
   padding: 0.35rem 0.6rem;
   margin: 0 auto 0.25rem;
   max-width: 900px;
   border-radius: 5px;
-  box-shadow: none;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  
 }
 
-/* Clear button + count */
+/* ===== Clear button + count ===== */
 .btn-clear {
   font-size: 1rem;
   padding: 0.5rem 1.2rem;
@@ -322,7 +286,7 @@ button:hover {
 .btn-waiting { background: #f6c343 !important; color: #000; }
 .btn-cleared { background: #0a8274 !important; color: #fff; }
 
-/* ===== Homepage layout (compact, even rhythm) ===== */
+/* ===== Homepage layout ===== */
 main.homepage {
   max-width: 900px;
   margin: 0 auto;
@@ -344,7 +308,6 @@ main.homepage {
   border-radius: 8px;
   border: 1px solid #bbb;
   background: #fff;
-  box-shadow: none;
 }
 .search-input:focus {
   border-color: var(--brand-dark);
@@ -352,82 +315,102 @@ main.homepage {
   outline: none;
 }
 
-/* Quick tag buttons */
+/* === Quick Access Tag Buttons === */
 .quick-tags {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 0.2rem 0 0.4rem;
+  margin: 0.4rem 0 0.8rem;
 }
 .tag-btn {
-  background: #eee;
-  color: #333;
-  border-radius: 16px;
-  padding: 0.3rem 0.8rem;
-  border: 1px solid #ccc;
-  font-size: 0.88rem;
-  transition: all 0.2s ease;
-}
-.tag-btn:hover { background: var(--brand); color: white; border-color: var(--brand-dark); }
-
-/* Tag cloud */
-.tag-cloud {
-  text-align: center;
-  margin: 0.4rem 0 0.8rem;
-  line-height: 1.6rem;
-}
-.tag-link {
-  margin: 0.1rem 0.4rem;
-  color: #1a2c5b;
-  text-decoration: none;
+  background: var(--brand);
+  color: white;
+  border: 1px solid var(--brand-dark);
+  border-radius: 18px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.9rem;
   font-weight: 500;
+  cursor: pointer;
+  
+  transition: all 0.25s ease;
 }
-.tag-link:hover { color: var(--brand-dark); text-decoration: underline; }
-
-/* Compact sections */
-section { margin-bottom: 0.8rem; }
-
-/* Remove shadows & outlines globally */
-main, header, footer, .control-space, .search-section, .quick-tags, .tag-cloud {
-  box-shadow: none !important;
-  border: none !important;
-  outline: none !important;
+.tag-btn:hover {
+  background: var(--brand-dark);
+  border-color: var(--brand-dark);
+  transform: translateY(-1px);
+  
 }
+.tag-btn.active {
+  background: var(--brand-dark);
+  color: #fff;
+  border-color: var(--brand-dark);
+  
+}
+
+
+
 /* === Recipe Detail Page Layout === */
-.recipe-detail-page {
-  max-width: 750px;
-  margin: 1rem auto 2rem;
-  padding: 0 1rem;
-  background: var(--background);
+.recipe-detail {
+  max-width: 900px;
+  margin: 1rem auto;
+  padding: 1.5rem 2rem;
+  background: #fff;
+  border-radius: 10px;
+  
+  text-align: left;
 }
-
-.recipe-header {
+.recipe-detail h3 { margin-top: 1rem; margin-bottom: 0.4rem; }
+.recipe-detail .method-text {
+  margin-top: 0;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.recipe-detail img { border-radius: 8px; max-width: 220px; }
+.recipe-detail .content-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.6rem;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
-
-.recipe-title {
-  font-size: 1.8rem;
-  color: #1a2c5b;
-  margin: 0;
+.recipe-detail .ingredients-column {
+  flex: 0 1 auto;
+  min-width: 260px;
+  max-width: 60%;
 }
-
-.ingredients-section, .method-section {
-  margin-top: 1rem;
-}
-
-.ingredients-list {
-  list-style: disc inside;
-  margin: 0.3rem 0 1rem 0;
-  padding: 0;
+.recipe-detail .ingredients-column ul {
+  list-style-type: disc;
+  margin-left: 1.2rem;
   line-height: 1.6;
 }
+.recipe-detail .image-column img {
+  max-width: 160px;
+  width: 100%;
+  border-radius: 8px;
+}
+/* === Sticky Quick Access (Homepage only) === */
+.homepage .quick-tags {
+  position: sticky;
+  top: 5.4rem; /* below nav + control */
+  z-index: 80;
+  background: var(--background);
+  padding: 0.4rem 0.5rem;
+  
+  border-radius: 6px;
+}
 
-.recipe-actions {
-  margin-top: 1.5rem;
-  display: flex;
-  gap: 1rem;
+/* === Global Sticky Navigation + Control Space === */
+.site-title { 
+  position: static; 
+}
+
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--brand);
+  color: var(--brand-dark);
+  text-align: center;                 /* ✅ center links */
+  padding: 0.6rem 0;                  /* slightly taller for breathing room */
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);  /* subtle depth */
 }

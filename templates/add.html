@@ -1,92 +1,149 @@
 {% extends "base.html" %}
 {% block title %}Add Recipe{% endblock %}
+
 {% block content %}
-  <h2>Add a Recipe</h2>
+<main class="homepage">
 
-  <form method="post">
-    <p>
-      <label>Name</label><br>
-      <input name="name" placeholder="e.g. Tagliatelle Carbonara" required>
-    </p>
-    <p>
-      <label>Ingredients (one per line)</label><br>
-      <textarea name="ingredients" rows="6"
-        placeholder="Examples:
-200 g penne
-2 cloves garlic, crushed
-1½ cups milk
-parmesan"></textarea>
-    </p>
-    <p>
-      <label>Method</label><br>
-      <textarea name="method" rows="8"
-        placeholder="Step-by-step instructions..."></textarea>
-    </p>
-    <p>
-      <label>Image URL (optional)</label><br>
-      <input name="image_url" placeholder="https://example.com/photo.jpg">
-    </p>
+  <!-- === Controls at the top (under nav) === -->
+  <div class="control-space"
+       style="margin-bottom:1rem; display:flex; flex-wrap:wrap; justify-content:center; gap:0.5rem;">
+    <!-- ✅ Button explicitly linked to form below -->
+    <button type="submit" form="addForm" class="btn-edit" id="saveRecipeBtn">💾 Save Recipe</button>
+    <a href="/" class="btn-clear">Cancel</a>
+  </div>
 
-    {# --- Grouped tag “pills” --- #}
-    <h3>Tags</h3>
-    <div class="tag-groups">
+  <!-- === Add Recipe Card === -->
+  <div class="recipe-edit"
+       style="max-width:900px; margin:auto; background:#fff; border-radius:10px;
+              padding:1.5rem; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
 
-      <fieldset>
-        <legend>Ingredients</legend>
-        <div class="tag-box">
-          {% for t in ingredient_tags %}
-            <label class="tag-pill">
-              <input type="checkbox" name="tags" value="{{ t }}">
-              <span>{{ t }}</span>
+    <h2 style="margin-top:0; color:#1a2c5b;">➕ Add New Recipe</h2>
+
+    <!-- ✅ Make sure form id matches the button’s “form” attribute -->
+    <form id="addForm" method="post" action="{{ url_for('add_recipe') }}"
+          style="display:flex; flex-direction:column; gap:1rem;">
+
+
+      <!-- Basic fields -->
+      <label><strong>Name</strong></label>
+      <input name="name" placeholder="e.g. Tagliatelle Carbonara" required
+             style="padding:0.6rem; border:1px solid #bbb; border-radius:6px;">
+
+      <label><strong>Recipe Link (optional)</strong></label>
+      <input type="text" name="linked_recipe" placeholder="https://example.com"
+             style="padding:0.6rem; border:1px solid #bbb; border-radius:6px;">
+
+      <label><strong>Image URL (optional)</strong></label>
+      <input name="image_url" placeholder="https://example.com/photo.jpg"
+             style="padding:0.6rem; border:1px solid #bbb; border-radius:6px;">
+
+      <!-- Ingredients + Image preview side by side -->
+      <div style="display:flex; flex-wrap:wrap; gap:1.5rem; justify-content:center; align-items:flex-start;">
+        <div style="flex:1; min-width:260px;">
+          <label><strong>Ingredients (one per line)</strong></label>
+          <textarea name="ingredients" rows="6"
+                    placeholder="e.g.\n200 g penne\n2 cloves garlic\n1 cup milk"
+                    style="width:100%; border:1px solid #bbb; border-radius:6px;
+                           padding:0.6rem; resize:vertical;"></textarea>
+        </div>
+
+        <div style="flex:0 0 220px; text-align:center;">
+          <div id="imagePreview"
+               style="width:100%; max-width:220px; height:140px; background:#f0f0f0;
+                      border-radius:8px; display:flex; align-items:center;
+                      justify-content:center; color:#aaa;">
+            No image
+          </div>
+        </div>
+      </div>
+
+      <label><strong>Method</strong></label>
+      <textarea name="method" rows="8" placeholder="Step-by-step instructions..."
+                style="width:100%; border:1px solid #bbb; border-radius:6px;
+                       padding:0.6rem; resize:vertical;"></textarea>
+
+      <!-- Tag groups will go here next -->
+      <!-- === Tags Section === -->
+<h3 style="margin-top:1rem;">Tags</h3>
+
+{% if tags_dict %}
+  <div class="tag-groups" style="display:flex; flex-wrap:wrap; gap:1rem;">
+    {% for group_name, tag_list in tags_dict.items() %}
+      <fieldset style="border:1px solid #ddd; border-radius:8px; padding:0.8rem; min-width:200px; flex:1;">
+        <legend style="font-weight:600;">{{ group_name }}</legend>
+        <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
+          {% for t in tag_list %}
+            <label style="cursor:pointer;">
+              <input type="checkbox" name="tags" value="{{ t }}" style="display:none;">
+              <span class="tag-pill" style="
+                    display:inline-block;
+                    padding:0.35rem 0.8rem;
+                    border-radius:16px;
+                    border:1px solid #0a8274;
+                    color:#0a8274;
+                    background:#fff;
+                    font-size:0.85rem;
+                    transition:all 0.2s ease;">
+                {{ t }}
+              </span>
             </label>
           {% endfor %}
         </div>
       </fieldset>
+    {% endfor %}
+  </div>
+{% else %}
+  <p style="color:#777;">No tags defined yet. Use “Manage Tags” to create groups.</p>
+{% endif %}
 
-      <fieldset>
-        <legend>Type</legend>
-        <div class="tag-box">
-          {% for t in type_tags %}
-            <label class="tag-pill">
-              <input type="checkbox" name="tags" value="{{ t }}">
-              <span>{{ t }}</span>
-            </label>
-          {% endfor %}
-        </div>
-      </fieldset>
+<p style="margin-top:1rem;">
+  <strong>Extra tags (comma-separated):</strong><br>
+  <input type="text" name="extra_tags" placeholder="e.g. spicy, family-favourite"
+         style="width:100%; border:1px solid #bbb; border-radius:6px; padding:0.6rem;">
+</p>
 
-      <fieldset>
-        <legend>Other</legend>
-        <div class="tag-box">
-          {% for t in other_tags %}
-            <label class="tag-pill">
-              <input type="checkbox" name="tags" value="{{ t }}">
-              <span>{{ t }}</span>
-            </label>
-          {% endfor %}
-        </div>
-      </fieldset>
 
-      <fieldset>
-        <legend>Occasion</legend>
-        <div class="tag-box">
-          {% for t in occasion_tags %}
-            <label class="tag-pill">
-              <input type="checkbox" name="tags" value="{{ t }}">
-              <span>{{ t }}</span>
-            </label>
-          {% endfor %}
-        </div>
-      </fieldset>
+    </form>
+  </div>
 
-      <p>Extra tags (comma-separated):</p>
-      <input type="text" name="extra_tags" placeholder="e.g. spicy, family-favourite">
-    </div>
-    {# --- End tag section --- #}
+  <script>
+    // Live image preview
+    const imageInput = document.querySelector('input[name="image_url"]');
+    const imagePreview = document.getElementById('imagePreview');
+    if (imageInput && imagePreview) {
+      imageInput.addEventListener('input', () => {
+        const url = imageInput.value.trim();
+        if (url) {
+          imagePreview.innerHTML = '';
+          const img = document.createElement('img');
+          img.src = url;
+          img.style.width = '100%';
+          img.style.maxWidth = '220px';
+          img.style.borderRadius = '8px';
+          imagePreview.replaceChildren(img);
+        } else {
+          imagePreview.textContent = 'No image';
+          imagePreview.style.background = '#f0f0f0';
+        }
+      });
+    }
 
-    <button type="submit">Save</button>
-  </form>
-
-  <p><a href="/recipes">View recipes</a> | <a href="/">Home</a></p>
+    // === Tag pill toggle behaviour ===
+  document.querySelectorAll('.tag-groups label').forEach(label => {
+    const checkbox = label.querySelector('input[type="checkbox"]');
+    const pill = label.querySelector('.tag-pill');
+    label.addEventListener('click', e => {
+      e.preventDefault();
+      checkbox.checked = !checkbox.checked;
+      if (checkbox.checked) {
+        pill.style.background = '#0a8274';
+        pill.style.color = '#fff';
+      } else {
+        pill.style.background = '#fff';
+        pill.style.color = '#0a8274';
+      }
+    });
+  });
+  </script>
+</main>
 {% endblock %}
-

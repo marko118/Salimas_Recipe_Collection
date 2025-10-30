@@ -361,6 +361,7 @@ def get_tag_cloud():
 
 @app.route("/recipes")
 def recipe_list_home():
+    # === Load recipes from the database ===
     rows = get_all_recipes()
     recipes = [
         {
@@ -373,7 +374,36 @@ def recipe_list_home():
         }
         for r in rows
     ]
-    return render_template("recipes.html", recipes=recipes)
+
+    # === Load Quick Access tags from tags.json ===
+    from pathlib import Path
+    import json
+
+    tags_path = Path("tags.json")
+    quick_access = []
+    all_tags = []
+
+    if tags_path.exists():
+        try:
+            tags_data = json.loads(tags_path.read_text(encoding="utf-8"))
+            quick_access = tags_data.get("Quick Access", [])
+            # combine all tag groups for tag cloud, if you use it
+            for group_tags in tags_data.values():
+                if isinstance(group_tags, list):
+                    all_tags.extend(group_tags)
+        except Exception as e:
+            print("⚠️ Error loading tags.json:", e)
+    else:
+        quick_access = ["Favourites", "Easy Lunch"]
+
+    # === Render the page ===
+    return render_template(
+        "recipes.html",
+        recipes=recipes,
+        quick_access=quick_access,
+        all_tags=sorted(set(all_tags))
+    )
+
 
 
 
@@ -436,17 +466,16 @@ def add_recipe():
 
         if name:
             add_recipe_to_db(name, ingredients, method, image_url, tags)
-            return redirect(url_for("recipe_list"))
+            return redirect(url_for("index"))
+
 
     # ✅ This part runs when we need to show the form (GET request)
-    tags_dict = load_tags_json()   # read your new tags.json file
+    tags_dict = load_tags_json()
     return render_template(
-        "add.html",
-        ingredient_tags=tags_dict.get("Ingredients", []),
-        type_tags=tags_dict.get("Type", []),
-        other_tags=tags_dict.get("Other", []),
-        occasion_tags=tags_dict.get("Occasion", [])
-    )
+    "add.html",
+    tags_dict=tags_dict
+)
+
 
 
 @app.route("/edit/<int:recipe_id>", methods=["GET", "POST"])
@@ -482,25 +511,24 @@ def edit_recipe(recipe_id):
             linked_recipe,
             notes
         )
-        return redirect(url_for("recipe_detail", recipe_id=recipe_id))
+        return redirect(url_for("recipe_detail", recipe_id=recipe_id, saved="1"))
 
     # --- When page is loaded normally (GET) ---
-    existing_tags = set((tags or "").split(","))
+    tags_dict = load_tags_json()  # load all groups from tags.json dynamically
+
     return render_template(
-        "edit.html",
-        id=rid,
-        name=name,
-        ingredients=ingredients or "",
-        method=method or "",
-        image_url=image_url or "",
-        tags=tags or "",
-        linked_recipe=linked_recipe or "",
-        notes=notes or "",
-        ingredient_tags=INGREDIENT_TAGS,
-        type_tags=TYPE_TAGS,
-        other_tags=OTHER_TAGS,
-        occasion_tags=OCCASION_TAGS
-    )
+    "edit.html",
+    id=rid,
+    name=name,
+    ingredients=ingredients or "",
+    method=method or "",
+    image_url=image_url or "",
+    tags=tags or "",
+    linked_recipe=linked_recipe or "",
+    notes=notes or "",
+    tags_dict=tags_dict
+)
+
 
 
 
@@ -508,7 +536,7 @@ def edit_recipe(recipe_id):
 @app.route("/delete/<int:recipe_id>", methods=["POST"])
 def delete_recipe_route(recipe_id):
     delete_recipe(recipe_id)
-    return redirect(url_for("recipe_list"))
+    return redirect(url_for("index"))
 
 
 
@@ -518,39 +546,60 @@ def admin_tags():
 
     if request.method == "POST":
         new_data = {}
-        # Each group will come back as a textarea named like group_Ingredients
+
+        # Each group is a textarea like group_Ingredients, group_Quick_Access, etc.
         for key, val in request.form.items():
             if key.startswith("group_"):
-                group_name = key[len("group_"):]
-                # Split on newlines or commas, strip whitespace
+                group_name = key[len("group_"):].replace("_", " ")
                 items = [t.strip() for t in val.replace(",", "\n").splitlines() if t.strip()]
-                # Remove duplicates while preserving order
                 new_data[group_name] = list(dict.fromkeys(items))
 
-        # Save the updated groups back to JSON
+        # ✅ Handle creation of an entirely new tag group
+        new_group = request.form.get("new_group_name", "").strip()
+        if new_group and new_group not in new_data:
+            new_data[new_group] = []
+
         save_tags_json(new_data)
         return redirect(url_for("admin_tags"))
 
-    # GET request: show current groups
+    # --- GET: display all existing groups ---
     return render_template("admin_tags.html", tags_dict=tags_dict)
+
 
 @app.route("/")
 def index():
     with get_conn() as conn:
         c = conn.cursor()
         default_tag = "chicken"
-        # show recipes tagged 'chicken' by default
-        c.execute("SELECT id, name, ingredients FROM recipes WHERE tags LIKE ?", (f'%{default_tag}%',))
+        # Show all recipes, newest first
+        c.execute("SELECT id, name, ingredients FROM recipes ORDER BY id DESC")
         recipes = c.fetchall()
-                # Load tag counts for the tag cloud
+
+        # Load tag counts for the tag cloud
         tag_cloud = get_tag_cloud()
+
+    # ✅ Load Quick Access tags from tags.json
+    from pathlib import Path
+    import json
+
+    tags_path = Path("tags.json")
+    quick_access = []
+
+    if tags_path.exists():
+        try:
+            tags_data = json.loads(tags_path.read_text(encoding="utf-8"))
+            quick_access = tags_data.get("Quick Access", [])
+        except Exception as e:
+            print("⚠️ Error loading tags.json:", e)
 
     return render_template(
         "index.html",
         recipes=recipes,
         tag_cloud=tag_cloud,
-        default_tag=default_tag
+        default_tag=default_tag,
+        quick_access=quick_access
     )
+
 
 @app.route("/search")
 def search():

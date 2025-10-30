@@ -2,19 +2,38 @@
 {% block title %}Manage Tags{% endblock %}
 
 {% block content %}
-  <h2>Manage Tag Groups</h2>
+  <main class="homepage">
+    <h2>Manage Tag Groups</h2>
 
-  <form method="post" class="admin-tags-form">
-    {% for group_name, items in tags_dict.items() %}
-      <fieldset>
-        <legend>{{ group_name }}</legend>
-        <p class="hint">One tag per line (commas also allowed).</p>
-        <textarea name="group_{{ group_name }}" rows="6" style="width:100%;">{{ "\n".join(items) }}</textarea>
+    <form method="post" class="admin-tags-form" style="max-width:800px; margin:auto;">
+      {% for group_name, items in tags_dict.items() %}
+        <fieldset style="margin-bottom:1.5rem; background:#fff; border:1px solid #ccc; border-radius:8px; padding:1rem;">
+          <legend style="font-weight:600; color:#0a8274;">{{ group_name }}</legend>
+          <p class="hint" style="font-size:0.9rem; color:#666;">One tag per line (commas also allowed).</p>
+          <textarea name="group_{{ group_name | replace(' ', '_') }}"
+                    rows="6"
+                    style="width:100%; border-radius:6px; border:1px solid #bbb; padding:0.6rem; font-size:1rem;">{{ "\n".join(items) }}</textarea>
+        </fieldset>
+      {% endfor %}
+
+      <!-- === Add a New Tag Group === -->
+      <fieldset style="margin-top:1rem; background:#f8f8f8; border:1px dashed #bbb; border-radius:8px; padding:1rem;">
+        <legend style="font-weight:600; color:#555;">➕ Add New Tag Group</legend>
+        <input type="text"
+               name="new_group_name"
+               placeholder="e.g. Quick Access"
+               style="width:60%; padding:0.5rem; border:1px solid #ccc; border-radius:6px; font-size:1rem;">
       </fieldset>
-    {% endfor %}
-    <button type="submit">Save Changes</button>
-  </form>
 
-  <p style="margin-top:1rem;"><a href="{{ url_for('recipe_list') }}">← Back to recipes</a></p>
+      <div style="text-align:center; margin-top:1.5rem;">
+        <button type="submit" style="padding:0.7rem 1.4rem; border-radius:8px; background:#0a8274; color:#fff; border:none; cursor:pointer;">
+          💾 Save Changes
+        </button>
+      </div>
+    </form>
+
+    <p style="margin-top:1.5rem; text-align:center;">
+      <a href="{{ url_for('recipe_list_home') }}" style="color:#0a8274; text-decoration:none;">← Back to recipes</a>
+    </p>
+  </main>
 {% endblock %}
-

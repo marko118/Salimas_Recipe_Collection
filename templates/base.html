@@ -8,57 +8,63 @@
 </head>
 <body>
 
-  <!-- === Site Header === -->
-  <header class="site-header">
-    <h1 class="site-title">
-      <a href="/">🍲 Salima's Recipes</a>
-    </h1>
+  <!-- Title header (scrolls away) -->
+<header class="site-header">
+  <h1 class="site-title"><a href="/">🍲 Salima's Recipes</a></h1>
+</header>
 
-    <nav class="site-nav">
-      <a href="/add">Add</a> |
-      <a href="{{ url_for('admin_tags') }}">Manage Tags</a> |
-      <a href="{{ url_for('planner') }}">Planner</a>
-    </nav>
-  </header>
+<!-- Sticky nav (independent) -->
+<nav class="site-nav">
+  <a href="/">Home</a> |
+  <a href="/add">Add</a> |
+  <a href="{{ url_for('admin_tags') }}">Manage Tags</a> |
+  <a href="{{ url_for('planner') }}">Planner</a>
+</nav>
 
-  <!-- === Control Space (light teal section below header) === -->
+
+  <!-- === GLOBAL CONTROL SPACE (Sticky under nav) === -->
   <div id="control-space" class="control-space">
+    {% if 'recipe' in request.path %}
+      <a href="{{ url_for('edit_recipe', recipe_id=request.view_args.get('recipe_id', 0)) }}"
+         id="editBtn"
+         class="btn-edit"
+         style="margin-right:1rem;">✏️ Edit</a>
+    {% endif %}
+
     <button id="clearSelectedBtn" class="btn-clear">Clear Selections</button>
     <span id="mealCount" class="meal-count"># Meals selected: 0</span>
   </div>
 
-  <!-- === Main Page Content === -->
-  
+  <!-- === MAIN PAGE CONTENT === -->
+  <main>
     {% block content %}{% endblock %}
-  
+  </main>
 
-  <!-- === Footer === -->
+  <!-- === FOOTER === -->
   <footer class="site-footer">
-    &copy; {{ 2025|default(2025) }} Salima's Recipes
+    &copy; {{ 2025|default(2025) }} Salima’s Recipes
   </footer>
 
-  <!-- === Global JS: Meal Counter + Clear Logic === -->
+  <!-- === GLOBAL JS === -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
 
-      // --- Update all visible meal counters ---
-      const updateCount = () => {
+      // --- Meal counter ---
+      const updateMealCount = () => {
         const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
         document.querySelectorAll("#mealCount").forEach(el => {
           el.textContent = `# Meals selected: ${stored.length}`;
         });
       };
-      window.updateMealCount = updateCount;
-      updateCount();
+      window.updateMealCount = updateMealCount;
+      updateMealCount();
 
-      // --- Double-tap Clear Selections button ---
+      // --- Double-tap clear button ---
       const clearBtn = document.getElementById("clearSelectedBtn");
       if (clearBtn) {
         let waiting = false;
-
         clearBtn.addEventListener("click", () => {
           if (!waiting) {
-            // First tap → confirm prompt
             clearBtn.textContent = "Tap again to confirm";
             clearBtn.classList.add("btn-waiting");
             waiting = true;
@@ -69,24 +75,40 @@
             }, 2500);
             return;
           }
-
-          // Second tap → actually clear
+          // Confirmed clear
           localStorage.removeItem("selectedRecipes");
           document.querySelectorAll(".select-dish-btn").forEach(btn => {
             btn.classList.remove("selected");
           });
-          updateCount();
-
-          // Flash green feedback
+          updateMealCount();
           clearBtn.textContent = "Cleared!";
           clearBtn.classList.add("btn-cleared");
           setTimeout(() => {
             clearBtn.textContent = "Clear Selections";
             clearBtn.classList.remove("btn-cleared");
           }, 1500);
-
           waiting = false;
         });
+      }
+
+      // --- “Saved!” feedback when returning from edit ---
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("saved")) {
+        const editBtn = document.querySelector("#editBtn");
+        if (editBtn) {
+          const originalText = editBtn.textContent;
+          editBtn.textContent = "✅ Saved!";
+          editBtn.style.background = "#00b35f";
+          editBtn.style.color = "#fff";
+          setTimeout(() => {
+            editBtn.textContent = originalText;
+            editBtn.style.background = "var(--brand)";
+            editBtn.style.color = "white";
+            const url = new URL(window.location);
+            url.searchParams.delete("saved");
+            window.history.replaceState({}, "", url);
+          }, 1800);
+        }
       }
     });
   </script>
