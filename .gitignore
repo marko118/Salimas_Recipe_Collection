@@ -5,3 +5,4 @@ __pycache__/
 recipes.db
 venv/
 
+.DS_Store
