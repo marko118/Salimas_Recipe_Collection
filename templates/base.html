@@ -24,16 +24,19 @@
 
   <!-- === GLOBAL CONTROL SPACE (Sticky under nav) === -->
   <div id="control-space" class="control-space">
-    {% if 'recipe' in request.path %}
-      <a href="{{ url_for('edit_recipe', recipe_id=request.view_args.get('recipe_id', 0)) }}"
-         id="editBtn"
-         class="btn-edit"
-         style="margin-right:1rem;">✏️ Edit</a>
-    {% endif %}
+  {% if 'recipe' in request.path %}
+    <a href="{{ url_for('edit_recipe', recipe_id=request.view_args.get('recipe_id', 0)) }}"
+       id="editBtn"
+       class="btn-edit"
+       style="margin-right:1rem;">✏️ Edit</a>
+  {% endif %}
 
-    <button id="clearSelectedBtn" class="btn-clear">Clear Selections</button>
-    <span id="mealCount" class="meal-count"># Meals selected: 0</span>
-  </div>
+  <button id="clearSelectedBtn" class="btn-clear">🧹 Clear Selections</button>
+  <span id="mealCount" class="meal-count"># Meals selected: 0</span>
+
+  
+</div>
+
 
   <!-- === MAIN PAGE CONTENT === -->
   <main>
@@ -112,6 +115,31 @@
       }
     });
   </script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const btn   = document.getElementById("toggleTagsBtn");
+  const cloud = document.getElementById("tagCloudContainer");
+  if (!btn || !cloud) return;
+
+  const savedState = localStorage.getItem("tagCloudVisible") === "true";
+  cloud.classList.toggle("visible", savedState);
+  cloud.classList.toggle("hidden", !savedState);
+  btn.classList.toggle("active", savedState);
+  btn.textContent = savedState ? "Hide Cloud" : "Show Cloud";
+
+  btn.addEventListener("click", () => {
+    const visible = cloud.classList.contains("visible");
+    cloud.classList.toggle("visible", !visible);
+    cloud.classList.toggle("hidden", visible);
+    btn.classList.toggle("active", !visible);
+    btn.textContent = visible ? "Show Cloud" : "Hide Cloud";
+    localStorage.setItem("tagCloudVisible", (!visible).toString());
+  });
+});
+</script>
+
 
 </body>
 </html>

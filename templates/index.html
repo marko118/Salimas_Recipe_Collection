@@ -5,16 +5,15 @@
 
 <main class="homepage">
 
-  <!-- === Search Box === -->
-  <section class="search-section">
-    <form action="{{ url_for('search') }}" method="get">
-      <input type="text"
-             name="q"
-             placeholder="Search recipes..."
-             autofocus
-             class="search-input">
-    </form>
-  </section>
+  <!-- === Search + Tag Cloud Toggle Row === -->
+<section class="search-section">
+  <form action="{{ url_for('search') }}" method="get" class="search-form">
+    <input type="text" name="q" placeholder="Search recipes..." class="search-input">
+    <button type="button" id="toggleTagsBtn" class="btn-toggle-cloud">Show Cloud</button>
+  </form>
+</section>
+
+
 
   <!-- === Quick Access Tag Buttons (from tags.json) === -->
 <section class="quick-tags">
@@ -32,17 +31,24 @@
 
 
 
-    <!-- === Tag Cloud === -->
-  <section class="tag-cloud">
-  {% for tag, count in tag_cloud %}
-    {% set size = 0.9 + (count * 0.04) %}
-    {% set color = 100 - (count * 8) %}
-    <a href="{{ url_for('search') }}?tag={{ tag }}"
-       class="tag-link"
-       style="font-size: {{ size }}em; color: hsl({{ color }}, 60%, 40%);">
-       {{ tag }}
-    </a>
-  {% endfor %}
+    <!-- === Tag Cloud with Toggle === -->
+<section id="tagCloudWrapper">
+
+
+
+  <!-- Tag Cloud (hidden by default) -->
+  <div id="tagCloudContainer" class="tag-cloud hidden">
+    {% for tag, count in tag_cloud %}
+      {% set size = 0.9 + (count * 0.04) %}
+      {% set color = 100 - (count * 8) %}
+      <a href="{{ url_for('search') }}?tag={{ tag }}"
+         class="tag-link"
+         style="font-size: {{ size }}em; color: hsl({{ color }}, 60%, 40%);">
+         {{ tag }}
+      </a>
+    {% endfor %}
+  </div>
+
 </section>
 
 

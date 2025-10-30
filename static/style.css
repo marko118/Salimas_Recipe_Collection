@@ -262,6 +262,70 @@ button:hover { background: var(--brand-dark); }
   border-bottom: 1px solid rgba(0,0,0,0.05);
   
 }
+/* === Joined Search Bar + Show Cloud Button === */
+.search-form {
+  display: inline-flex;
+  align-items: center;       /* centers both vertically */
+  gap: 30px;                    /* no horizontal gap */
+  vertical-align: middle;
+}
+
+.search-input {
+  width: 50%;
+  max-width: 400px;
+  height: 2.4rem;            /* lock consistent height */
+  padding: 0 0.8rem;         /* smaller vertical padding */
+  font-size: 0.95rem;
+  border: 1px solid #bbb;
+  border-right: none;        /* visually join with button */
+  border-radius: 8px 0 0 8px;
+  background: #fff;
+  line-height: 1.2rem;
+  box-sizing: border-box;    /* keep dimensions consistent */
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: var(--brand-dark);
+  box-shadow: 0 0 0 1.5px rgba(10,130,116,0.2);
+  outline: none;
+}
+
+.btn-toggle-cloud {
+  height: 2.3rem;                  /* keep same total height */
+  padding: 0 1rem 0.1rem 1rem;     /* slight bottom pad fix */
+  font-size: 0.9rem;
+  line-height: 1;                  /* centers text vertically */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: var(--brand-dark);
+  border: 1px solid #bbb;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+.btn-toggle-cloud {
+  position: relative;
+  top: -4px;     /* lift the button box up by 1 pixel */
+}
+
+.btn-toggle-cloud:hover {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand-dark);
+}
+
+.btn-toggle-cloud.active {
+  background: var(--brand-dark);
+  color: #fff;
+  border-color: var(--brand-dark);
+}
+
+
+
 
 /* ===== Clear button + count ===== */
 .btn-clear {
@@ -281,6 +345,30 @@ button:hover { background: var(--brand-dark); }
   font-weight: 600;
   color: var(--brand-dark);
 }
+
+/* === Toggle Tag Cloud Button === */
+#toggleTagsBtn {
+  background: #fff;
+  border: 1px solid #888;
+  border-radius: 8px;
+  color: var(--brand-dark);
+  font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.15s ease;
+}
+
+#toggleTagsBtn:hover {
+  background: var(--brand);
+  color: white;
+  transform: translateY(-1px);
+}
+
+#toggleTagsBtn.active {
+  background: var(--brand-dark);
+  color: white;
+}
+
 
 /* Feedback states */
 .btn-waiting { background: #f6c343 !important; color: #000; }
@@ -346,6 +434,40 @@ main.homepage {
   color: #fff;
   border-color: var(--brand-dark);
   
+}
+
+/* === Tag Cloud Styles and Reveal Animation === */
+.tag-cloud {
+  text-align: center;
+  margin: 0.4rem 0 0.8rem;
+  line-height: 1.6rem;
+}
+
+.tag-link {
+  margin: 0.1rem 0.4rem;
+  color: #1a2c5b;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.tag-link:hover {
+  color: var(--brand-dark);
+  text-decoration: underline;
+}
+
+/* === Animated Show / Hide states === */
+.tag-cloud.hidden {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+
+.tag-cloud.visible {
+  max-height: 500px;    /* adjust based on your content */
+  opacity: 1;
+  transform: translateY(0);
 }
 
 
