@@ -1,9 +1,25 @@
-
-# Ignore local runtime files
+# ---- Python general ----
 __pycache__/
-*.pyc
-recipes.db
-venv/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
 
+# ---- Virtual environment ----
+venv/
+env/
+
+# ---- Databases ----
+*.db
+
+# ---- Backups ----
+*.bak
+*_backup*
+*_before_*
+*.json~
+
+# ---- Logs / temp files ----
+*.log
 .DS_Store
-.DS_Store
+*.swp
