@@ -357,6 +357,19 @@ body.overlay-active #listOverlay {
 
 </head>
 <body>
+  <!-- Back to home link (safe placement) -->
+<div style="text-align:center; margin-top:1em; margin-bottom:1.5em;">
+  <a href="/" class="btn" style="
+       display:inline-block;
+       text-decoration:none;
+       background:#f7f7ff;
+       border:1px solid #888;
+       border-radius:8px;
+       padding:0.4em 1em;
+       color:#1a4ca3;">
+    ⬅️ Back to Home
+  </a>
+</div>
 
 <!-- SHOPPING -->
 <section id="shopping">
@@ -828,13 +841,26 @@ document.getElementById("addIngredientsBtn").onclick=()=>{
   saveAll();renderShopping();
   alert(`✅ Added ${added} new ingredients to the shopping list.`);
 };
-/* === Remove meal cards === */
-document.querySelectorAll(".remove-meal").forEach(btn => {
-  btn.addEventListener("click", () => {
+/* === Remove meal cards (delegated version, always works) === */
+document.addEventListener("click", e => {
+  if (e.target.classList.contains("remove-meal")) {
+    const btn = e.target;
     const card = btn.closest(".meal");
-    card.remove(); // instantly hides the card
-  });
+    const mealName = btn.dataset.name || card.querySelector("h3").textContent.trim();
+
+    // Visually remove the card
+    card.remove();
+
+    // Remove it from localStorage so it's persistent
+    let stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
+    stored = stored.filter(r => r.name !== mealName);
+    localStorage.setItem("selectedRecipes", JSON.stringify(stored));
+
+    // Update meal count (if global counter exists)
+    if (window.updateMealCount) window.updateMealCount();
+  }
 });
+
 /* === Hide already-used meals in planner === */
 function updateAvailableMeals() {
   const chosen = Array.from(document.querySelectorAll(".meal-select"))
