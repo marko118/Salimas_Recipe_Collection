@@ -792,6 +792,17 @@ document.getElementById("printListBtn").onclick = () => {
   setTimeout(() => win.close(), 500);
 };
 
+/* === Copy shopping list to clipboard === */
+document.getElementById("copyListBtn").addEventListener("click", () => {
+  const text = document.getElementById("finalList").innerText.trim();
+  if (!text) {
+    alert("Nothing to copy.");
+    return;
+  }
+  navigator.clipboard.writeText(text)
+    .then(() => alert("📋 Shopping list copied to clipboard!"))
+    .catch(() => alert("❌ Copy failed — your browser may not allow clipboard access."));
+});
 
 
 
@@ -823,24 +834,32 @@ if (confirm("Clear all current shopping list items?\n(Your saved suggestions wil
 };
 
 
-/* === Add ingredients from meals === */
-document.getElementById("addIngredientsBtn").onclick=()=>{
-  const ings=[...document.querySelectorAll("#meals .meal .checkbox")].map(b=>b.nextSibling.textContent.trim()).filter(Boolean);
-  let added=0;
-  ings.forEach(item=>{
-    const name=item.toLowerCase();
-    const cat=detectCategory(name);
-    const exists=shoppingData[cat].some(i=>i.name.toLowerCase()===name);
-    if(!exists){
-      shoppingData[cat].push({name:item,checked:true,amount:""});
-      learnCategory(name,cat);
-      if(!suggestionData[cat].includes(item))suggestionData[cat].push(item);
+/* === Add only checked ingredients from meals === */
+document.getElementById("addIngredientsBtn").onclick = () => {
+  // collect only checked ingredient labels
+  const checkedBoxes = document.querySelectorAll("#meals .meal .checkbox:checked");
+  const ings = [...checkedBoxes]
+    .map(b => b.nextSibling.textContent.trim())
+    .filter(Boolean);
+
+  let added = 0;
+  ings.forEach(item => {
+    const name = item.toLowerCase();
+    const cat = detectCategory(name);
+    const exists = shoppingData[cat].some(i => i.name.toLowerCase() === name);
+    if (!exists) {
+      shoppingData[cat].push({ name: item, checked: true, amount: "" });
+      learnCategory(name, cat);
+      if (!suggestionData[cat].includes(item)) suggestionData[cat].push(item);
       added++;
     }
   });
-  saveAll();renderShopping();
+
+  saveAll();
+  renderShopping();
   alert(`✅ Added ${added} new ingredients to the shopping list.`);
 };
+
 /* === Remove meal cards (delegated version, always works) === */
 document.addEventListener("click", e => {
   if (e.target.classList.contains("remove-meal")) {
