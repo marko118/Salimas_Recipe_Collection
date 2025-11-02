@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Planner v3 – Salima’s Recipes{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='planner_v3.css') }}">
+{% endblock %}
+
+{% block content %}
+<main id="plannerV3" class="planner-v3">
+
+  <!-- === Section 1: Shopping List === -->
+<section id="shoppingListSection" class="planner-section">
+  <h3>🛒 Shopping List</h3>
+
+  <div class="planner-controls">
+    <input id="ingredientInput"
+           type="text"
+           list="ingredientSuggestions"
+           placeholder="Type an ingredient and press Enter…" autofocus>
+
+    <datalist id="ingredientSuggestions"></datalist>
+
+    <button id="addIngredientBtn">Add</button>
+    <button id="exportBtn">Export</button>
+  </div>
+
+  <!-- Auto-categorised shopping grid -->
+  <section id="categoryGrid" class="category-grid"></section>
+</section>
+
+
+  <!-- === Section 2: Selected Recipes === -->
+<section id="recipesInPlanner" class="planner-section">
+  <div class="section-header">
+    <h3>📘 Selected Recipes</h3>
+    <button id="importFromRecipesBtn" class="add-to-list">➕ Add to List</button>
+  </div>
+
+  <div id="recipesContainer" class="recipes-grid">
+    <!-- dynamically filled by planner_recipes.js -->
+  </div>
+</section>
+
+
+  <!-- === Section 3: 4-Day Meal Planner === -->
+  <section id="mealPlanGrid" class="planner-section">
+    <h3>🍽️ 4-Day Meal Plan</h3>
+    <div class="planner-toggle">
+      <label for="dayToggle">Week starts:</label>
+      <select id="dayToggle">
+        <option value="sun">Sunday → Wednesday</option>
+        <option value="wed">Wednesday → Sunday</option>
+      </select>
+    </div>
+    <div id="mealGridContainer" class="meal-grid">
+      <!-- grid built dynamically by planner_grid.js -->
+    </div>
+  </section>
+
+</main>
+
+<!-- === Overlay for Copy / Print === -->
+<div id="overlay" hidden>
+  <div class="overlay-box">
+    <h3>🧾 Shopping List Preview</h3>
+    <pre id="overlayContent"></pre>
+    <div class="overlay-buttons">
+      <button id="copyBtn">📋 Copy</button>
+      <button id="printBtn">🖨️ Print</button>
+      <button id="closeOverlay">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- === JS Modules === -->
+<script src="{{ url_for('static', filename='planner_v3.js') }}"></script>
+<script src="{{ url_for('static', filename='planner_recipes.js') }}"></script>
+<script src="{{ url_for('static', filename='planner_grid.js') }}"></script>
+
+
+{% endblock %}

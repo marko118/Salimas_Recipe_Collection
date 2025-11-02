@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Salima's Recipes{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block head %}{% endblock %}
 </head>
 <body>
 
@@ -14,6 +15,11 @@
       <a href="/">🍲 Salima's Recipes</a>
     </h1>
   </header>
+
+  
+
+</body>
+</html>
 
   <!-- === STICKY NAV (independent) === -->
   <nav class="site-nav">

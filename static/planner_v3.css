@@ -1,0 +1,429 @@
+/* === Planner v3 — Clean Scaffold Layout === */
+:root {
+  --brand: #87d6d4;
+  --brand-dark: #0a8274;
+  --background: #f0eedd;
+  --text-color: #333;
+}
+body {
+  background: var(--background);
+  color: var(--text-color);
+  font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+/* --- General Layout --- */
+.planner-v3 {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 1.5rem 2rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.planner-v3 h2, .planner-v3 h3 {
+  color: var(--brand-dark, #0a8274);
+  margin-top: 0;
+}
+
+.planner-section {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 2px solid #eee;
+}
+
+.section-note {
+  font-size: 0.95rem;
+  color: #666;
+  margin-top: -0.4rem;
+  margin-bottom: 1rem;
+}
+
+/* --- Controls Bar --- */
+.planner-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.planner-controls input {
+  flex: 1;
+  min-width: 220px;
+  padding: .5rem .6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.planner-controls button {
+  border: 1px solid #888;
+  background: var(--brand, #87d6d4);
+  color: #fff;
+  border-radius: 6px;
+  padding: .5rem 1rem;
+  cursor: pointer;
+  transition: background .2s;
+}
+.planner-controls button:hover {
+  background: var(--brand-dark, #0a8274);
+}
+
+/* --- Shopping List Grid --- */
+/* === True vertical masonry layout (multi-column) === */
+.category-grid {
+  column-count: 4;          /* how many columns on desktop */
+  column-gap: 1rem;         /* space between columns */
+  width: 100%;
+  margin-top: 1rem;
+}
+
+@media (max-width: 1200px) {
+  .category-grid { column-count: 3; }
+}
+@media (max-width: 900px) {
+  .category-grid { column-count: 2; }
+}
+@media (max-width: 600px) {
+  .category-grid { column-count: 1; }
+}
+
+/* Each category box */
+.category {
+  display: inline-block;
+  width: 95%;               /* narrower box within each column */
+  margin: 0 auto 0.8rem;    /* center it horizontally */
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  break-inside: avoid;
+}
+
+.category:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+}
+
+/* Category header */
+.category h3 {
+  margin: 0 0 0.4rem 0;
+  font-size: 1.1rem;
+  color: #0a8274;
+  border-bottom: 1.5px solid #eee;
+  padding-bottom: 0.3rem;
+}
+
+/* Items inside category */
+.category ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.category li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px dashed #f3f3f3;
+}
+
+.category li span {
+  flex: 1;
+  text-align: left;
+}
+
+.category li:last-child {
+  border-bottom: none;
+}
+
+/* Empty categories */
+.category.empty {
+  opacity: 0.45;
+  background: #fdfdfd;
+  border-style: dashed;
+  box-shadow: none;
+  text-align: center;
+}
+.category.empty h3 {
+  border: none;
+  color: #aaa;
+  font-style: italic;
+  font-weight: normal;
+  margin: 0;
+}
+
+
+
+/* --- Recipes Grid --- */
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+.recipe-card {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 1rem;
+}
+.recipe-card h4 {
+  margin: 0 0 .5rem;
+  color: #1a2c5b;
+}
+.recipe-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.recipe-card li {
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* --- Meal Plan Grid --- */
+.planner-toggle {
+  margin-bottom: 1rem;
+}
+
+.meal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.meal-day {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fafafa;
+  padding: 1rem;
+}
+.meal-day h4 {
+  margin-top: 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: .3rem;
+}
+.meal-slot {
+  margin-top: .5rem;
+}
+.meal-slot label {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: .2rem;
+}
+.meal-slot input {
+  width: 100%;
+  padding: .4rem .5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* --- Overlay --- */
+#overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+.overlay-box {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  padding: 1.5rem 2rem;
+  max-width: 600px;
+  width: 90%;
+}
+.overlay-buttons {
+  text-align: center;
+  margin-top: 1rem;
+}
+.overlay-buttons button {
+  margin: 0 .3rem;
+}
+
+/* --- Responsive --- */
+@media (max-width: 600px) {
+  .planner-controls {
+    flex-direction: column;
+  }
+  .planner-controls input {
+    width: 100%;
+  }
+}
+/* --- Force overlay hidden state to truly hide it --- */
+#overlay[hidden] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* === Toast notifications === */
+#toastContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 4000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast {
+  background: var(--brand-dark, #0a8274);
+  color: #fff;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  font-size: 0.95rem;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInOut 3s ease forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(10px); }
+  10%, 80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+
+/* === Meal plan grid === */
+.meal-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+.meal-grid-table th, .meal-grid-table td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: left;
+}
+.meal-grid-table th {
+  background: var(--brand, #87d6d4);
+  color: white;
+}
+.meal-grid-table td[contenteditable="true"] {
+  background: #fff;
+  min-width: 120px;
+  cursor: text;
+}
+.meal-grid-table td[contenteditable="true"]:focus {
+  outline: 2px solid var(--brand-dark, #0a8274);
+  background: #f0fefc;
+}
+
+.meal-grid-table td.drag-over {
+  outline: 2px dashed var(--brand, #87d6d4);
+  background: #e6f9f8;
+}
+.recipe-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.97);
+}
+
+/* === Drag & drop visual cues === */
+.category li.dragging {
+  opacity: 0.5;
+  background: #f0fdfc;
+}
+.category.drag-over {
+  outline: 2px dashed var(--brand, #87d6d4);
+  background: #f8fffe;
+}
+.category.drag-over {
+  transform: scale(1.02);
+  transition: transform 0.15s ease;
+}
+
+.recipe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .4rem;
+}
+
+.recipe-link {
+  text-decoration: none;
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
+.recipe-link .link-icon {
+  margin-right: .3rem;
+  opacity: 0.8;
+}
+
+.remove-recipe {
+  background: none;
+  border: none;
+  color: #c33;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.1s ease, color 0.2s;
+}
+.remove-recipe:hover {
+  transform: scale(1.1);
+  color: #a00;
+}
+/* --- Selected Recipes Header --- */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.add-to-list {
+  border: 1px solid #888;
+  background: var(--brand, #87d6d4);
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.add-to-list:hover {
+  background: var(--brand-dark, #0a8274);
+}
+
+/* --- Recipe link icon --- */
+.recipe-link {
+  text-decoration: none;
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+.recipe-link:hover {
+  text-decoration: underline;
+}
+.link-icon {
+  margin-left: 0.4rem;
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+.recipe-header h4 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+
+.link-icon {
+  font-size: 1.1rem;
+  opacity: 0.75;
+  text-decoration: none;
+}
+
+.link-icon:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}

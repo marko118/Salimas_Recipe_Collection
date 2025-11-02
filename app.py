@@ -644,50 +644,62 @@ def planner():
     # Just render the notebook layout; meals are loaded dynamically from localStorage
     return render_template("planner_notebook.html")
 
+@app.route("/planner_v3")
+def planner_v3():
+    """Clean functional rebuild of Planner v3."""
+    print("→ Rendering planner_v3.html")
+    return render_template("planner_v3.html")
+
+
 
 @app.route("/api/selected")
 def api_selected():
+    """Return recipe info + ingredients for given IDs (used by planner_v3)."""
     import json
+
     ids = request.args.get("ids", "")
     if not ids:
         return {"meals": []}
+
     id_list = [i for i in ids.split(",") if i.isdigit()]
     if not id_list:
         return {"meals": []}
 
     with get_conn() as conn:
         c = conn.cursor()
-        q = f"SELECT id, name, ingredients FROM recipes WHERE id IN ({','.join(['?'] * len(id_list))})"
+        q = f"SELECT id, name, ingredients, linked_recipe FROM recipes WHERE id IN ({','.join(['?'] * len(id_list))})"
         c.execute(q, id_list)
         rows = c.fetchall()
 
     meals = []
-    for rid, name, ing_text in rows:
+    for rid, name, ing_text, linked_recipe in rows:
         try:
-            # Try to interpret proper JSON first
             if ing_text and ing_text.strip().startswith("["):
                 ingredients = json.loads(ing_text)
-                if isinstance(ingredients, str):  # handle double-encoded JSON
+                if isinstance(ingredients, str):
                     ingredients = json.loads(ingredients)
             else:
-                # Treat commas and newlines as separators
                 text = (ing_text or "").replace(",", "\n")
                 ingredients = [i.strip() for i in text.splitlines() if i.strip()]
         except Exception:
-            # Fallback cleanup if JSON or text is malformed
             text = (ing_text or "").replace(",", "\n").replace("[", "").replace("]", "").replace('"', "")
             ingredients = [i.strip() for i in text.splitlines() if i.strip()]
 
-        # Ensure list of strings, even if JSON was nested
         if isinstance(ingredients, list):
             ingredients = [str(i).strip() for i in ingredients]
         else:
             ingredients = [str(ingredients).strip()]
 
+        # ✅ Prefer external link if available
+        if linked_recipe and linked_recipe.startswith("http"):
+            recipe_url = linked_recipe
+        else:
+            recipe_url = url_for("recipe_detail", recipe_id=rid)
+
         meals.append({
             "id": rid,
             "name": name,
-            "url": url_for("recipe_detail", recipe_id=rid),
+            "url": recipe_url,
             "ingredients": ingredients
         })
 
@@ -696,10 +708,13 @@ def api_selected():
 
 
 
+
+
 # ---------------------------
 # Entrypoint
 # ---------------------------
 if __name__ == "__main__":
-    init_db()  # safe to call every run
-    app.run(debug=True)
+    init_db()
+    app.run(debug=True, port=5050, host="127.0.0.1")
+
 
