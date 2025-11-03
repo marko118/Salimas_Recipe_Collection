@@ -23,7 +23,7 @@
     <datalist id="ingredientSuggestions"></datalist>
 
     <button id="addIngredientBtn">Add</button>
-    <button id="exportBtn">Export</button>
+    <button id="exportBtn">Generate List</button>
     <button id="clearListBtn" class="danger-btn">Clear</button>
   </div>
 
@@ -65,15 +65,19 @@
 <!-- === Overlay for Copy / Print === -->
 <div id="overlay" hidden>
   <div class="overlay-box">
-    <h3>🧾 Shopping List Preview</h3>
-    <pre id="overlayContent"></pre>
-    <div class="overlay-buttons">
+    <div class="overlay-buttons top-buttons">
+      <button id="closeOverlay">✖ Close</button>
       <button id="copyBtn">📋 Copy</button>
       <button id="printBtn">🖨️ Print</button>
-      <button id="closeOverlay">Close</button>
     </div>
+
+    <h3 id="overlayTitle">🧾 Shopping List</h3>
+    <div id="overlayDate"></div>
+
+    <div id="overlayContent"></div>
   </div>
 </div>
+
 
 <!-- === JS Modules === -->
 <script src="{{ url_for('static', filename='planner.js') }}"></script>

@@ -746,20 +746,33 @@ def api_save_shopping_list():
     if not isinstance(data, list):
         return jsonify({"error": "Invalid data"}), 400
 
+    if not data:
+        return jsonify({"error": "Empty list received; nothing saved."}), 400
+
     db = get_db()
-    db.execute("DELETE FROM shopping_list;")
+
+    # ✅ Instead of deleting everything, replace items in-place
     for item in data:
         db.execute(
-            "INSERT OR IGNORE INTO shopping_list (category, name, checked, note) VALUES (?, ?, ?, ?)",
-            (
-                item.get("category", ""),
-                item.get("name", ""),
-                int(item.get("checked", False)),
-                item.get("note", ""),
-            ),
-        )
+    """
+    INSERT INTO shopping_list (category, name, checked, note)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(category, name) DO UPDATE SET
+      checked = excluded.checked,
+      note = excluded.note;
+    """,
+    (
+        item.get("category", ""),
+        item.get("name", ""),
+        int(item.get("checked", False)),
+        item.get("note", ""),
+    ),
+)
+
+
     db.commit()
     return jsonify({"ok": True})
+
 
 
 # === Shared Meal Plan API ===

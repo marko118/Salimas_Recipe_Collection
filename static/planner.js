@@ -341,94 +341,183 @@ input.addEventListener("keypress", e => {
 });
 
 if (clearBtn) {
-  clearBtn.onclick = () => {
-    if (!confirm("Clear all items?")) return;
+  clearBtn.onclick = async () => {
+    if (!confirm("⚠️ This will clear the entire shopping list for everyone. Continue?"))
+      return;
+
+    // Clear only locally first
     data = {};
     DEFAULT_CATEGORIES.forEach(c => (data[c] = []));
-    saveServerData();
-
     render();
+
+    // Ask for second confirmation before saving
+    const confirmSave = confirm("✅ Clear list on server as well?");
+    if (confirmSave) {
+      await saveServerData();
+      showToast("🧹 Shopping list cleared everywhere.", "info");
+    } else {
+      showToast("🧼 Cleared locally only — server list kept safe.", "warn");
+    }
   };
 }
 
+
+// --- Generate / Export shopping list to overlay ---
 if (exportBtn) {
   exportBtn.onclick = () => {
+    console.log("🟢 Generate List clicked");
     const overlay = document.getElementById("overlay");
     const out = document.getElementById("overlayContent");
-    out.textContent = "";
-    for (const cat of DEFAULT_CATEGORIES) {
-      const items = data[cat].filter(i => i.checked);
-      if (!items.length) continue;
-      out.textContent += `${cat.toUpperCase()}:\n`;
-      items.forEach(i => (out.textContent += `• ${i.name}\n`));
-      out.textContent += "\n";
+    if (!overlay || !out) {
+      showToast("Overlay not found.", "error");
+      return;
     }
+
+    out.innerHTML = "";
+    let any = false;
+
+    for (const cat of DEFAULT_CATEGORIES) {
+      const items = data[cat];
+      if (!Array.isArray(items) || items.length === 0) continue;
+
+      const header = document.createElement("div");
+      header.textContent = cat.toUpperCase() + ":";
+      header.style.marginTop = "0.8em";
+      header.style.fontWeight = "bold";
+      header.style.breakAfter = "avoid-column"; // ✅ keeps category with its items
+
+      out.appendChild(header);
+
+      items.forEach(i => {
+        any = true;
+        const line = document.createElement("div");
+        line.className = "overlay-item";
+        line.textContent = `• ${i.name}${i.note ? " (" + i.note + ")" : ""}`;
+        line.style.cursor = "pointer";
+
+        if (i.crossed) {
+          line.classList.add("crossed");
+        }
+
+        line.onclick = () => {
+          i.crossed = !i.crossed;
+          line.classList.toggle("crossed", i.crossed);
+          saveServerData(); // persist cross state
+        };
+
+        out.appendChild(line);
+      });
+    }
+
+    if (!any) {
+      out.textContent = "No items in your shopping list.";
+      return;
+    }
+
+    document.getElementById("overlayTitle").textContent = "🧾 Shopping List";
+    document.getElementById("overlayDate").textContent =
+      "Generated " + new Date().toLocaleString();
+
     overlay.hidden = false;
+    overlay.scrollTo({ top: 0, behavior: "instant" });
+    showToast("🧾 List generated — ready to cross off, copy, or print.", "success");
   };
 }
-// --- Overlay controls ---
-document.getElementById("closeOverlay").onclick = () =>
-  (document.getElementById("overlay").hidden = true);
 
-document.getElementById("copyBtn").onclick = () => {
-  navigator.clipboard.writeText(
-    document.getElementById("overlayContent").textContent
-  );
-  showToast("📋 Copied to clipboard!", "success");
+// --- Overlay controls ---
+document.getElementById("closeOverlay").onclick = () => {
+  document.getElementById("overlay").hidden = true;
 };
 
+// --- Copy list (include ✔ for crossed items) ---
+// --- Copy list (include category headers and crossed items) ---
+document.getElementById("copyBtn").onclick = () => {
+  const content = document.getElementById("overlayContent");
+  let text = "";
+  let currentHeader = "";
+
+  content.childNodes.forEach(node => {
+    if (node.nodeType === 1 && node.style.fontWeight === "bold") {
+      // It's a category header
+      currentHeader = node.textContent.trim();
+      text += `\n${currentHeader}\n`;
+    } else if (node.classList && node.classList.contains("overlay-item")) {
+      // It's an ingredient line
+      const lineText = node.textContent.trim();
+      if (node.classList.contains("crossed")) {
+        text += `✔ ${lineText} (done)\n`;
+      } else {
+        text += `• ${lineText}\n`;
+      }
+    }
+  });
+
+  navigator.clipboard.writeText(text.trim());
+  showToast("📋 List copied with categories!", "success");
+};
+
+
+// --- Print shopping list ---
 document.getElementById("printBtn").onclick = () => {
+  const overlay = document.getElementById("overlay");
+
+  // ✅ Force layout reflow before printing (prevents blank pages)
+  overlay.offsetHeight; // triggers browser to recompute layout
+
   window.print();
   showToast("🖨️ Print dialog opened", "info");
 };
 
-// --- Import from selected recipes ---
+
+
+// --- Import from selected recipes (detect checked boxes inside recipe cards) ---
 if (importBtn) {
   importBtn.onclick = async () => {
-    const stored = JSON.parse(localStorage.getItem("selectedRecipes") || "[]");
-    if (!stored.length) {
-      showToast("⚠️ No recipes selected.", "warn");
-      return;
-    }
+    console.log("🟢 Add to List clicked");
 
-    const ids = stored.map(r => (r.id ? r.id : r)).filter(Boolean);
-    const resp = await fetch(`/api/selected?ids=${ids.join(",")}`);
-    const json = await resp.json();
+    // Find all checked ingredient boxes within any recipe card
+    const checkedBoxes = document.querySelectorAll(
+      "#recipesContainer .recipe-card li input[type='checkbox']:checked"
+    );
+    console.log("✅ Found checked ingredients:", checkedBoxes.length);
 
-    if (!json.meals || !json.meals.length) {
-      showToast("⚠️ No recipe data returned.", "warn");
+    if (checkedBoxes.length === 0) {
+      showToast("⚠️ No ingredients checked.", "warn");
       return;
     }
 
     let added = 0;
-    for (const meal of json.meals) {
-      const lines = Array.isArray(meal.ingredients)
-        ? meal.ingredients.flatMap(t => t.split(/\r?\n|,/g))
-        : (meal.ingredients || "").split(/\r?\n|,/g);
 
-      for (const line of lines) {
-        const clean = cleanIngredient(line);
-        if (!clean) continue;
+    checkedBoxes.forEach(box => {
+      // Get the ingredient name (text node next to checkbox)
+      const nameNode = box.parentElement;
+      if (!nameNode) return;
 
-        const cat = detectCategory(clean);
-        const existing = data[cat].find(i => i.name === clean);
-        if (!existing) {
-          data[cat].push({ name: clean, checked: true });
-          added++;
-        }
-      }
-    }
+      const text = nameNode.textContent.trim();
+      const clean = cleanIngredient(text);
+      if (!clean) return;
+
+      const cat = detectCategory(clean);
+      if (!data[cat]) data[cat] = [];
+
+      const exists = data[cat].some(i => i.name === clean);
+      if (exists) return;
+
+      // Add as a new item (unchecked by default in list)
+      data[cat].push({ name: clean, checked: false });
+      added++;
+    });
 
     if (added > 0) {
-      saveServerData();
-
+      await saveServerData();
       render();
-      showToast(`✅ Added ${added} new ingredients.`, "success");
+      showToast(`✅ Added ${added} ingredients to shopping list.`, "success");
     } else {
       showToast("ℹ️ No new ingredients added.", "info");
     }
   };
 }
+
 
 
 
@@ -451,12 +540,15 @@ function buildIngredientSuggestions() {
   });
 }
 
+
+// --- Load shared data from the server ---
+loadServerData();
+
 // --- Initial render ---
 //render();
 buildIngredientSuggestions();
 
-// --- Load shared data from the server ---
-loadServerData();
+
 
 // --- Learn new custom ingredients automatically ---
 function learnNewIngredient(name) {
