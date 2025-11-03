@@ -104,6 +104,23 @@ def init_db():
         if "tags" not in cols:
             c.execute("ALTER TABLE recipes ADD COLUMN tags TEXT")
 
+        # === Ensure shopping_list table exists ===
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS shopping_list (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                category TEXT,
+                amount TEXT,
+                checked INTEGER DEFAULT 1,
+                crossed INTEGER DEFAULT 0,
+                active INTEGER DEFAULT 1,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()   # ✅ Make sure this runs after the new table creation
+
+
+
 def delete_recipe(recipe_id):
     with get_conn() as conn:
         c = conn.cursor()
@@ -821,6 +838,102 @@ def feed_mealplan():
 
     text_output = "\n".join(lines)
     return text_output, 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+# ---------------------------
+# Shopping List API
+# ---------------------------
+
+from flask import jsonify
+
+@app.route("/api/shopping_list", methods=["GET"])
+def api_shopping_list_get():
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute("""
+            SELECT id, name, category, amount, checked, crossed, active
+            FROM shopping_list
+            WHERE active = 1
+            ORDER BY category, name
+        """)
+        rows = c.fetchall()
+    items = [
+        {
+            "id": r[0],
+            "name": r[1],
+            "category": r[2] or "",
+            "amount": r[3] or "",
+            "checked": bool(r[4]),
+            "crossed": bool(r[5]),
+            "active": bool(r[6]),
+        }
+        for r in rows
+    ]
+    return jsonify(items)
+
+
+@app.route("/api/shopping_list", methods=["POST"])
+def api_shopping_list_post():
+    data = request.get_json(force=True)
+    name = data.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "Missing name"}), 400
+
+    category = data.get("category")
+    amount = data.get("amount", "")
+    checked = int(bool(data.get("checked", True)))
+    crossed = int(bool(data.get("crossed", False)))
+    active = 1
+
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO shopping_list (name, category, amount, checked, crossed, active)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (name, category, amount, checked, crossed, active))
+        conn.commit()
+        new_id = c.lastrowid
+
+    return jsonify({"id": new_id, "name": name, "category": category})
+
+
+@app.route("/api/shopping_list/<int:item_id>", methods=["PATCH"])
+def api_shopping_list_patch(item_id):
+    data = request.get_json(force=True)
+    allowed_fields = ["name", "category", "amount", "checked", "crossed", "active"]
+    sets, values = [], []
+
+    for field in allowed_fields:
+        if field in data:
+            sets.append(f"{field} = ?")
+            values.append(data[field])
+    if not sets:
+        return jsonify({"error": "No valid fields"}), 400
+
+    values.append(item_id)
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(f"UPDATE shopping_list SET {', '.join(sets)}, updated_at=CURRENT_TIMESTAMP WHERE id = ?", values)
+        conn.commit()
+
+    return jsonify({"status": "updated"})
+
+
+@app.route("/api/shopping_list/<int:item_id>", methods=["DELETE"])
+def api_shopping_list_delete(item_id):
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM shopping_list WHERE id = ?", (item_id,))
+        conn.commit()
+    return jsonify({"status": "deleted"})
+
+
+@app.route("/api/shopping_list/clear", methods=["POST"])
+def api_shopping_list_clear():
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute("UPDATE shopping_list SET active = 0, updated_at = CURRENT_TIMESTAMP")
+        conn.commit()
+    return jsonify({"status": "cleared"})
 
 
 # ---------------------------
