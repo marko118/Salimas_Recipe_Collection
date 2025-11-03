@@ -566,4 +566,17 @@ main.homepage {
 .select-dish-btn.selected .icon {
   color: #00b35f;
 }
+/* === Hide Clear Selections bar on Planner page === */
+body[data-page="planner"] #clearSelectedBtn {
+  display: none !important;              /* hides the button itself */
+}
+
+/* === Remove the control-space bar & line spacing on Planner page === */
+body[data-page="planner"] .control-space {
+  border-bottom: none !important;        /* remove the faint divider line */
+  margin-bottom: 0 !important;           /* reclaim vertical space */
+  padding-bottom: 0 !important;
+}
+
+
 

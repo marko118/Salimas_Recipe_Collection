@@ -45,11 +45,14 @@ body {
   flex-wrap: wrap;
   gap: .6rem;
   margin: 1rem 0 1.5rem;
+  position: relative;    /* ✅ anchor for suggestion box positioning */
 }
 
+/* === Refine Add-item input width (responsive, not fixed) === */
 .planner-controls input {
-  flex: 1;
-  min-width: 220px;
+  flex: 1 1 auto;          /* allow it to grow/shrink naturally */
+  max-width: 260px;        /* cap width so it matches one category column */
+  min-width: 180px;        /* keeps it usable on small screens */
   padding: .5rem .6rem;
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -427,3 +430,137 @@ body {
   opacity: 1;
   transform: scale(1.1);
 }
+/* === Hide Clear Selections button on Planner v3 page === */
+body[data-page="planner-v3"] #clearSelectedBtn {
+  display: none !important;
+}
+
+/* === Remove top divider line above Shopping List === */
+#shoppingListSection {
+  border-top: none !important;   /* hides the line */
+  margin-top: 0 !important;      /* pulls it up */
+  padding-top: 0.3rem !important;/* tiny breathing space */
+}
+
+/* === Align Add-to-List button beside the Selected Recipes title === */
+.section-header {
+  display: flex;
+  align-items: center;     /* vertically align title + button */
+  gap: 0.6rem;             /* space between them */
+  flex-wrap: wrap;         /* keep tidy if screen is narrow */
+}
+
+.section-header h3 {
+  margin: 0;               /* remove default spacing */
+}
+
+.section-header .add-to-list {
+  margin-left: auto;       /* pushes it to the right edge of the header line */
+}
+
+/* === Force Add-to-List beside the title, not on the right === */
+#recipesInPlanner .section-header {
+  display: flex !important;
+  justify-content: flex-start !important; /* keep items on the left */
+  align-items: center !important;          /* align vertically */
+  gap: 0.5rem !important;                  /* space between title and button */
+}
+
+#recipesInPlanner .section-header h3 {
+  margin: 0;
+}
+
+#recipesInPlanner .add-to-list {
+  margin: 0 !important;
+}
+
+
+/* === Add spacing when the 🔗 icon appears before recipe title === */
+.link-icon {
+  margin-right: 0.4rem;    /* space between icon and title */
+  font-size: 0.9em;        /* slightly smaller for balance */
+  opacity: 0.85;           /* a touch lighter */
+  vertical-align: middle;  /* align with text baseline */
+}
+
+/* === Custom Suggestion Dropdown (live + keyboard) === */
+.suggest-box {
+  position: absolute;
+  top: 100%;             /* appear directly below the input */
+  left: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  width: 100%;
+  max-width: 260px;
+  margin-top: 0.3rem;    /* small gap below input */
+  z-index: 200;
+}
+
+
+.suggest-item {
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+}
+
+.suggest-item:hover,
+.suggest-item.active {
+  background: var(--brand, #87d6d4);
+  color: #fff;
+}
+
+/* === Subtle Quantity / Note box — borderless, right-justified, grows left === */
+.qty-note {
+  display: inline-block;
+  min-width: 1.6rem;            /* width of “1” */
+  max-width: 12rem;
+  width: fit-content;
+  text-align: right;            /* text stays right-aligned */
+  background: transparent;
+  color: rgba(0,0,0,0.35);      /* faint default for typed text */
+  font-size: 0.9rem;
+  padding: 0.2rem 0.3rem;
+  outline: none;
+  border: none;                 /* ✅ no visible border */
+  transition: background 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+/* Barely visible placeholder */
+.qty-note::placeholder {
+  color: rgba(0, 0, 0, 0.08);   /* almost invisible — like a pencil trace */
+}
+
+/* When focused or when it has content */
+.qty-note:focus,
+.qty-note:not(:placeholder-shown) {
+  background: rgba(255,255,255,0.6);  /* light translucent background */
+  color: #222;                        /* normal readable text */
+}
+
+/* Responsive tweak */
+@media (max-width: 600px) {
+  .qty-note {
+    max-width: 8rem;
+  }
+}
+/* === Clear List button styling === */
+.danger-btn {
+  border: 1px solid #888;
+  background: #eee;
+  color: #333;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.danger-btn:hover {
+  background: #f5f5f5;
+}
+
+
+
+

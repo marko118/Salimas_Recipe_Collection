@@ -4,6 +4,11 @@ from tag_list import INGREDIENT_TAGS, TYPE_TAGS, OTHER_TAGS, OCCASION_TAGS
 from pathlib import Path
 import re
 import spacy
+from flask import jsonify, request, g
+import sqlite3
+import json
+from datetime import datetime
+
 
 import json
 from pathlib import Path
@@ -22,6 +27,31 @@ def save_tags_json(data: dict):
 
 DB_PATH = "recipes_v2.db"
 app = Flask(__name__)
+
+from flask import g
+import sqlite3
+
+DATABASE = "recipes_v2.db"
+
+def get_db():
+    db = getattr(g, "_database", None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+        db.row_factory = sqlite3.Row
+    return db
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, "_database", None)
+    if db is not None:
+        db.close()
+
+def query_db(query, args=(), one=False):
+    cur = get_db().execute(query, args)
+    rv = cur.fetchall()
+    cur.close()
+    return (rv[0] if rv else None) if one else rv
+
 
 # Load spaCy model once
 nlp = spacy.load("en_core_web_md")
@@ -641,14 +671,10 @@ def search():
 
 @app.route("/planner")
 def planner():
-    # Just render the notebook layout; meals are loaded dynamically from localStorage
-    return render_template("planner_notebook.html")
+    return render_template("planner.html")
 
-@app.route("/planner_v3")
-def planner_v3():
-    """Clean functional rebuild of Planner v3."""
-    print("→ Rendering planner_v3.html")
-    return render_template("planner_v3.html")
+
+
 
 
 
@@ -705,9 +731,83 @@ def api_selected():
 
     return {"meals": meals}
 
+# === Shared Shopping List API ===
+
+@app.route("/api/shopping_list", methods=["GET"])
+def api_get_shopping_list():
+    rows = query_db(
+        "SELECT category, name, checked, note FROM shopping_list ORDER BY category, name;"
+    )
+    return jsonify([dict(r) for r in rows])
+
+@app.route("/api/shopping_list", methods=["POST"])
+def api_save_shopping_list():
+    data = request.get_json(force=True)
+    if not isinstance(data, list):
+        return jsonify({"error": "Invalid data"}), 400
+
+    db = get_db()
+    db.execute("DELETE FROM shopping_list;")
+    for item in data:
+        db.execute(
+            "INSERT OR IGNORE INTO shopping_list (category, name, checked, note) VALUES (?, ?, ?, ?)",
+            (
+                item.get("category", ""),
+                item.get("name", ""),
+                int(item.get("checked", False)),
+                item.get("note", ""),
+            ),
+        )
+    db.commit()
+    return jsonify({"ok": True})
 
 
+# === Shared Meal Plan API ===
 
+@app.route("/api/meal_plan", methods=["GET"])
+def api_get_meal_plan():
+    rows = query_db("SELECT slot, recipe, link FROM meal_plan ORDER BY slot;")
+    return jsonify([dict(r) for r in rows])
+
+@app.route("/api/meal_plan", methods=["POST"])
+def api_save_meal_plan():
+    data = request.get_json(force=True)
+    if not isinstance(data, list):
+        return jsonify({"error": "Invalid data"}), 400
+
+    db = get_db()
+    db.execute("DELETE FROM meal_plan;")
+    for slot in data:
+        db.execute(
+            "INSERT INTO meal_plan (slot, recipe, link, updated) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+            (
+                slot.get("slot", ""),
+                slot.get("recipe", ""),
+                slot.get("link", ""),
+            ),
+        )
+    db.commit()
+    return jsonify({"ok": True})
+
+# === DAKboard-compatible Meal Plan Feed ===
+@app.route("/feed/mealplan")
+def feed_mealplan():
+    rows = query_db("SELECT slot, recipe FROM meal_plan ORDER BY slot;")
+    if not rows:
+        return "No meal plan found.", 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+    lines = []
+    for r in rows:
+        # slot looks like "sun_dinner" → turn into "Sun Dinner"
+        parts = r["slot"].split("_", 1)
+        if len(parts) == 2:
+            day, meal = parts
+            lines.append(f"{day.title()} {meal.title()}: {r['recipe']}")
+        else:
+            lines.append(f"{r['slot'].title()}: {r['recipe']}")
+
+    text_output = "\n".join(lines)
+    return text_output, 200, {"Content-Type": "text/plain; charset=utf-8"}
 
 
 # ---------------------------

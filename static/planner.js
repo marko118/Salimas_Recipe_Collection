@@ -29,13 +29,13 @@ const CATEGORY_MAP = {
 };
 
 // --- Load / Save helpers ---
-function loadJSON(key) {
-  try { return JSON.parse(localStorage.getItem(key)) || {}; }
-  catch { return {}; }
-}
-function saveJSON(key, obj) {
-  localStorage.setItem(key, JSON.stringify(obj));
-}
+//function loadJSON(key) {
+//  try { return JSON.parse(localStorage.getItem(key)) || {}; }
+//  catch { return {}; }
+//}
+//function saveJSON(key, obj) {
+//  localStorage.setItem(key, JSON.stringify(obj));
+//}
 
 // --- Toast notifications ---
 function showToast(message, type = "info") {
@@ -56,13 +56,17 @@ function showToast(message, type = "info") {
   // Remove after animation completes
   setTimeout(() => toast.remove(), 3000);
 }
+// --- Temporary in-memory learned map (keeps old code happy) ---
+let learned = {};
+
 
 function learnNewIngredient(name) {
   const trimmed = name.toLowerCase().trim();
   if (!trimmed) return;
   if (!learned[trimmed]) {
     learned[trimmed] = detectCategory(trimmed);
-    saveJSON(LEARN_KEY, learned);
+    saveServerData();
+
     buildIngredientSuggestions();
     showToast(`✅ Learned “${trimmed}”`, "success");
   }
@@ -72,7 +76,8 @@ function forgetIngredient(name) {
   const trimmed = name.toLowerCase().trim();
   if (learned[trimmed]) {
     delete learned[trimmed];
-    saveJSON(LEARN_KEY, learned);
+    saveServerData();
+
     buildIngredientSuggestions();
     showToast(`🗑️ Forgotten “${trimmed}”`, "warn");
   }
@@ -98,10 +103,60 @@ function cleanIngredient(raw) {
 }
 
 // --- Data stores ---
-let data = loadJSON(STORAGE_KEY);
-let learned = loadJSON(LEARN_KEY);
+let data = {};
+
+//let learned = loadJSON(LEARN_KEY);
 DEFAULT_CATEGORIES.forEach(c => { if (!data[c]) data[c] = []; });
-saveJSON(STORAGE_KEY, data);
+//saveServerData();
+
+
+// === Shared Shopping List API helpers ===
+async function loadServerData() {
+  try {
+    const resp = await fetch("/api/shopping_list");
+    if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+    const list = await resp.json();
+
+    // Reset and rebuild local data
+    data = {};
+    for (const row of list) {
+      if (!data[row.category]) data[row.category] = [];
+      data[row.category].push({
+        name: row.name,
+        checked: !!row.checked,
+        note: row.note || ""
+      });
+    }
+
+    // Only render once data is ready
+    render();
+    console.log("✅ Loaded shopping list from server:", list.length, "items");
+  } catch (err) {
+    console.error("⚠️ Failed to load shopping list:", err);
+    showToast("Could not load shared shopping list", "error");
+  }
+}
+
+
+async function saveServerData() {
+  const flat = [];
+  for (const cat in data) {
+    for (const item of data[cat]) {
+      flat.push({
+        category: cat,
+        name: item.name,
+        checked: item.checked,
+        note: item.note || ""
+      });
+    }
+  }
+  await fetch("/api/shopping_list", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(flat)
+  });
+}
+
 
 // --- DOM refs (one set only) ---
 const grid       = document.getElementById("categoryGrid");
@@ -109,6 +164,7 @@ const input      = document.getElementById("ingredientInput");
 const addBtn     = document.getElementById("addIngredientBtn");
 const clearBtn   = document.getElementById("clearAllBtn");
 const exportBtn  = document.getElementById("exportBtn");
+const clearListBtn = document.getElementById("clearListBtn");
 const importBtn  = document.getElementById("importFromRecipesBtn");
 
 // --- Detect + Learn ---
@@ -122,16 +178,27 @@ function detectCategory(name) {
 function learnCategory(name, newCat) {
   const lower = name.toLowerCase();
   learned[lower] = newCat;
-  saveJSON(LEARN_KEY, learned);
+  saveServerData();
+
 }
 
 // --- Render ---
 function render() {
+  // ✅ Debug: show what categories and items are about to be drawn
+  console.log("🧱 Rendering:", Object.entries(data).filter(([c, a]) => a.length));
+
+  // Clear the existing grid on screen
   grid.innerHTML = "";
+
+  // Loop through all categories and build their boxes
   for (const cat of DEFAULT_CATEGORIES) {
     const items = data[cat] || [];
+
+    // Create a container for this category
     const div = document.createElement("div");
     div.className = "category" + (items.length === 0 ? " empty" : "");
+
+    // Build the inner HTML for that category
     div.innerHTML = `
       <h3>${cat}</h3>
       <ul>
@@ -139,13 +206,28 @@ function render() {
           <li draggable="true">
             <input type="checkbox" ${i.checked ? "checked" : ""}>
             <span>${i.name}</span>
+            <input type="text" class="qty-note" value="${i.note || ''}" placeholder="1">
           </li>
         `).join("")}
-      </ul>`;
+      </ul>
+    `;
+
+    // Add this category box to the page grid
     grid.appendChild(div);
   }
+
+  // Re-attach all button, checkbox, and drag/drop handlers
   attachHandlers();
 }
+
+
+// === Pressing Enter in qty-note confirms entry ===
+document.addEventListener("keydown", e => {
+  if (e.target.classList.contains("qty-note") && e.key === "Enter") {
+    e.preventDefault();         // stop form submission or newline
+    e.target.blur();            // ✅ exit edit mode (commits visually)
+  }
+});
 
 // --- Event handlers (checkbox, dblclick delete, drag/drop) ---
 function attachHandlers() {
@@ -156,7 +238,8 @@ function attachHandlers() {
       const cat = box.closest(".category").querySelector("h3").textContent;
       const item = data[cat].find(i => i.name === name);
       if (item) item.checked = box.checked;
-      saveJSON(STORAGE_KEY, data);
+      saveServerData();
+
     };
   });
 
@@ -166,7 +249,8 @@ function attachHandlers() {
       const name = li.querySelector("span").textContent.trim();
       const cat = li.closest(".category").querySelector("h3").textContent;
       data[cat] = data[cat].filter(i => i.name !== name);
-      saveJSON(STORAGE_KEY, data);
+      saveServerData();
+
       forgetIngredient(name);
       render();
     };
@@ -197,15 +281,26 @@ function attachHandlers() {
       if (!name || !newCat) return;
 
       for (const cat of DEFAULT_CATEGORIES) {
-        const idx = data[cat].findIndex(i => i.name === name);
-        if (idx !== -1) {
-          const [item] = data[cat].splice(idx, 1);
-          data[newCat].push(item);
-          break;
-        }
-      }
+  // Skip categories that don’t exist yet
+  if (!data[cat]) continue;
 
-      saveJSON(STORAGE_KEY, data);
+  const idx = data[cat].findIndex(i => i.name === name);
+  if (idx !== -1) {
+    const [item] = data[cat].splice(idx, 1);
+
+    // Ensure the target category exists
+    if (!data[newCat]) data[newCat] = [];
+
+    data[newCat].push(item);
+    saveServerData();  // auto-save immediately after drop
+    showToast(`↔️ Moved “${name}” to ${newCat}`, "info");
+    break;
+  }
+}
+
+
+      saveServerData();
+
       render();
     });
   });
@@ -219,12 +314,26 @@ addBtn.onclick = () => {
 
   const cat = detectCategory(val);
   const name = val.toLowerCase();
+// Make sure the category exists first
+if (!data[cat]) data[cat] = [];
+
+  // ✅ Prevent duplicates
+  const exists = data[cat].some(i => i.name === name);
+  if (exists) {
+    showToast(`ℹ️ “${name}” already in ${cat}.`, "info");
+    input.value = "";
+    return;
+  }
+
+  // Add a fresh item (no qty)
   data[cat].push({ name, checked: true });
-  saveJSON(STORAGE_KEY, data);
+  saveServerData();
+
   learnNewIngredient(name);
   render();
   input.value = "";
 };
+
 
 
 input.addEventListener("keypress", e => {
@@ -236,7 +345,8 @@ if (clearBtn) {
     if (!confirm("Clear all items?")) return;
     data = {};
     DEFAULT_CATEGORIES.forEach(c => (data[c] = []));
-    saveJSON(STORAGE_KEY, data);
+    saveServerData();
+
     render();
   };
 }
@@ -302,24 +412,24 @@ if (importBtn) {
 
         const cat = detectCategory(clean);
         const existing = data[cat].find(i => i.name === clean);
-        if (existing) {
-          existing.qty = (existing.qty || 1) + 1;
-        } else {
-          data[cat].push({ name: clean, checked: true, qty: 1 });
+        if (!existing) {
+          data[cat].push({ name: clean, checked: true });
+          added++;
         }
-        added++;
       }
     }
 
     if (added > 0) {
-      saveJSON(STORAGE_KEY, data);
+      saveServerData();
+
       render();
-      showToast(`✅ Added ${added} ingredients.`, "success");
+      showToast(`✅ Added ${added} new ingredients.`, "success");
     } else {
       showToast("ℹ️ No new ingredients added.", "info");
     }
   };
 }
+
 
 
 // --- Build autocomplete list from known items ---
@@ -342,8 +452,11 @@ function buildIngredientSuggestions() {
 }
 
 // --- Initial render ---
-render();
+//render();
 buildIngredientSuggestions();
+
+// --- Load shared data from the server ---
+loadServerData();
 
 // --- Learn new custom ingredients automatically ---
 function learnNewIngredient(name) {
@@ -351,17 +464,183 @@ function learnNewIngredient(name) {
   if (!trimmed) return;
   if (!learned[trimmed]) {
     learned[trimmed] = detectCategory(trimmed); // store with detected category
-    saveJSON(LEARN_KEY, learned);
+    saveServerData();
+
     buildIngredientSuggestions(); // refresh autocomplete
   }
 }
+// === Custom Suggestion Dropdown v2 (live + keyboard) ===
+const suggestBox = document.getElementById("suggestBox");
+let currentIndex = -1;
+let currentSuggestions = [];
+
+// Build live suggestion list from learned + category map + existing data
+function getAllSuggestions() {
+  const known = new Set();
+  Object.values(CATEGORY_MAP).flat().forEach(w => known.add(w.toLowerCase()));
+  Object.keys(learned).forEach(k => known.add(k.toLowerCase()));
+  Object.values(data).flat().forEach(i => known.add(i.name.toLowerCase()));
+  return [...known].sort();
+}
+
+function showCustomSuggestions(query) {
+  const all = getAllSuggestions();
+  // Prioritize words that start with query, then those containing it later
+const lowerQ = query.toLowerCase();
+const starts = [];
+const contains = [];
+
+for (const v of all) {
+  if (v.startsWith(lowerQ)) starts.push(v);
+  else if (v.includes(lowerQ)) contains.push(v);
+}
+
+currentSuggestions = [...starts, ...contains].slice(0, 15);
+
+
+  if (currentSuggestions.length === 0) {
+    suggestBox.hidden = true;
+    return;
+  }
+
+  suggestBox.innerHTML = currentSuggestions
+    .map((v, i) => `<div class="suggest-item" data-index="${i}">${v}</div>`)
+    .join("");
+  suggestBox.hidden = false;
+  currentIndex = -1;
+
+  suggestBox.querySelectorAll(".suggest-item").forEach(div => {
+    div.onclick = () => selectSuggestion(parseInt(div.dataset.index));
+  });
+}
+
+function selectSuggestion(i) {
+  const val = currentSuggestions[i];
+  if (!val) return;
+  input.value = val;
+  addBtn.click();           // instantly add item
+  input.value = "";         // ✅ clear the text box
+  suggestBox.hidden = true;
+  currentIndex = -1;
+}
+
+
+// Input typing
+input.addEventListener("input", e => {
+  const val = input.value.trim();
+  if (val.length === 0) {
+    suggestBox.hidden = true;
+    return;
+  }
+  showCustomSuggestions(val);
+});
+
+// Keyboard navigation
+input.addEventListener("keydown", e => {
+  const items = suggestBox.querySelectorAll(".suggest-item");
+
+  // --- Arrow key navigation ---
+  if (!suggestBox.hidden && items.length > 0) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      currentIndex = (currentIndex + 1) % items.length;
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      currentIndex = (currentIndex - 1 + items.length) % items.length;
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      // If a suggestion is highlighted
+      if (currentIndex >= 0) {
+        selectSuggestion(currentIndex);
+        return;
+      }
+      // ✅ Otherwise, check for exact match or just add what’s typed
+      const val = input.value.trim().toLowerCase();
+      if (!val) return;
+      const all = getAllSuggestions();
+      if (all.includes(val)) {
+        // Add matching known ingredient
+        input.value = val;
+        addBtn.click();
+        input.value = "";
+      } else {
+        // Add new ingredient
+        addBtn.click();
+      }
+      suggestBox.hidden = true;
+      currentIndex = -1;
+      return;
+    } else if (e.key === "Escape") {
+      suggestBox.hidden = true;
+      return;
+    }
+
+    items.forEach((it, i) => {
+      it.classList.toggle("active", i === currentIndex);
+      if (i === currentIndex) it.scrollIntoView({ block: "nearest" });
+    });
+  }
+
+  // --- When list hidden, allow Enter to add typed item normally ---
+  if (e.key === "Enter" && (suggestBox.hidden || items.length === 0)) {
+    e.preventDefault();
+    addBtn.click();
+    input.value = "";
+  }
+});
+
+
+// Click outside closes box
+document.addEventListener("click", e => {
+  if (!suggestBox.contains(e.target) && e.target !== input) {
+    suggestBox.hidden = true;
+  }
+});
+
 
 // --- Forget an ingredient when deleted (double-click) ---
 function forgetIngredient(name) {
   const trimmed = name.toLowerCase().trim();
   if (learned[trimmed]) {
     delete learned[trimmed];
-    saveJSON(LEARN_KEY, learned);
+    saveServerData();
+
     buildIngredientSuggestions();
   }
+}
+
+// === Clear Shopping List (double-tap confirm) ===
+if (clearListBtn) {
+  let confirmTimeout;
+
+  clearListBtn.addEventListener("click", () => {
+    // First tap: ask for confirmation
+    if (!clearListBtn.dataset.confirm) {
+      clearListBtn.dataset.confirm = "true";
+      clearListBtn.textContent = "Confirm?";
+      clearListBtn.style.background = "#d55";
+      clearListBtn.style.color = "#fff";
+
+      clearTimeout(confirmTimeout);
+      confirmTimeout = setTimeout(() => {
+        clearListBtn.dataset.confirm = "";
+        clearListBtn.textContent = "Clear";
+        clearListBtn.style.background = "";
+        clearListBtn.style.color = "";
+      }, 2000); // 2 seconds to confirm
+      return;
+    }
+
+    // Second tap within 2 seconds: clear everything
+    clearListBtn.dataset.confirm = "";
+    clearListBtn.textContent = "Clear";
+    clearListBtn.style.background = "";
+    clearListBtn.style.color = "";
+
+    for (const cat in data) data[cat] = [];
+    saveServerData();
+
+    render();
+    showToast("🧹 Shopping list cleared.", "info");
+  });
 }

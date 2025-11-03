@@ -3,7 +3,7 @@
 
 {% block head %}
   {{ super() }}
-  <link rel="stylesheet" href="{{ url_for('static', filename='planner_v3.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='planner.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -15,14 +15,16 @@
 
   <div class="planner-controls">
     <input id="ingredientInput"
-           type="text"
-           list="ingredientSuggestions"
-           placeholder="Type an ingredient and press Enter…" autofocus>
+       type="text"
+       placeholder="Type an ingredient and press Enter…" autofocus>
+    <div id="suggestBox" class="suggest-box" hidden></div>
+
 
     <datalist id="ingredientSuggestions"></datalist>
 
     <button id="addIngredientBtn">Add</button>
     <button id="exportBtn">Export</button>
+    <button id="clearListBtn" class="danger-btn">Clear</button>
   </div>
 
   <!-- Auto-categorised shopping grid -->
@@ -74,9 +76,10 @@
 </div>
 
 <!-- === JS Modules === -->
-<script src="{{ url_for('static', filename='planner_v3.js') }}"></script>
+<script src="{{ url_for('static', filename='planner.js') }}"></script>
 <script src="{{ url_for('static', filename='planner_recipes.js') }}"></script>
 <script src="{{ url_for('static', filename='planner_grid.js') }}"></script>
+
 
 
 {% endblock %}
