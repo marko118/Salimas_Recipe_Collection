@@ -22,7 +22,7 @@
 
     <datalist id="ingredientSuggestions"></datalist>
 
-    <button id="addIngredientBtn">Add</button>
+    <button id="savePlannerBtn">💾 Save Planner</button>
     <button id="exportBtn">Generate List</button>
     <button id="clearListBtn" class="danger-btn">Clear</button>
   </div>
@@ -46,19 +46,27 @@
 
 
   <!-- === Section 3: 4-Day Meal Planner === -->
-  <section id="mealPlanGrid" class="planner-section">
+<section id="mealPlanGrid" class="planner-section">
+
+  <div class="section-header">
     <h3>🍽️ 4-Day Meal Plan</h3>
-    <div class="planner-toggle">
-      <label for="dayToggle">Week starts:</label>
-      <select id="dayToggle">
-        <option value="sun">Sunday → Wednesday</option>
-        <option value="wed">Wednesday → Sunday</option>
-      </select>
-    </div>
-    <div id="mealGridContainer" class="meal-grid">
-      <!-- grid built dynamically by planner_grid.js -->
-    </div>
-  </section>
+    <button id="clearMealPlanBtn" class="add-to-list">🧹 Clear Meal Plan</button>
+  </div>
+
+  <div class="planner-toggle">
+    <label for="dayToggle">Week starts:</label>
+    <select id="dayToggle">
+      <option value="sun">Sunday → Wednesday</option>
+      <option value="wed">Wednesday → Sunday</option>
+    </select>
+  </div>
+
+  <div id="mealGridContainer" class="meal-grid">
+    <!-- grid built dynamically by planner_grid.js -->
+  </div>
+</section>
+
+
 
 </main>
 

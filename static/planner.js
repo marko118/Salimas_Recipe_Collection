@@ -1,23 +1,24 @@
 /* ===============================
-   Planner v3 – Persistent Version
+   Planner v3 – Persistent Version (Revised for Planner.html)
    Uses /api/shopping_list backend
    =============================== */
 
-console.log("Planner v3 – API-linked mode loaded.");
+console.log("Planner v3 – API-linked mode loaded (Planner.html).");
 
-/* --- DOM references --- */
-const listContainer = document.getElementById("shopping-categories");
-const addIngredientsBtn = document.getElementById("addIngredientsBtn");
-const clearBtn = document.getElementById("clearShoppingBtn");
-const generateBtn = document.getElementById("generateListBtn");
+/* --- DOM references (updated IDs) --- */
+const listContainer = document.getElementById("categoryGrid");   // ✅ updated
+const ingredientInput = document.getElementById("ingredientInput");
+const clearBtn = document.getElementById("clearListBtn");        // ✅ updated
+const generateBtn = document.getElementById("exportBtn");        // ✅ updated
+const saveBtn = document.getElementById("savePlannerBtn");       // ✅ new
+const clearMealPlanBtn = document.getElementById("clearMealPlanBtn"); // ✅ new
 
-/* --- Category list (update as needed) --- */
+/* --- Category list --- */
 const categories = [
   "Produce", "Dairy & Eggs", "Meat & Fish",
   "Pantry", "Frozen", "Snacks", "Toiletries", "Other"
 ];
 
-/* --- In-memory cache of current items --- */
 let items = [];
 
 /* ===============================
@@ -49,6 +50,10 @@ function renderShoppingList() {
       .forEach(i => {
         const li = document.createElement("li");
         li.className = "item-row";
+        li.draggable = true;
+        li.dataset.id = i.id;
+        li.dataset.category = cat;
+
         li.innerHTML = `
           <label style="flex:1;">
             <input type="checkbox" class="shop-item" data-id="${i.id}" ${i.checked ? "checked" : ""}>
@@ -61,35 +66,19 @@ function renderShoppingList() {
         ul.appendChild(li);
       });
 
-    /* --- Add-item box --- */
-    const addBox = document.createElement("input");
-    addBox.type = "text";
-    addBox.className = "add-item";
-    addBox.placeholder = `Add ${cat.toLowerCase()} item...`;
-    addBox.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const name = addBox.value.trim();
-        if (name) {
-          addNewItem(name, cat);
-          addBox.value = "";
-        }
-      }
-    });
-
     box.appendChild(ul);
-    box.appendChild(addBox);
     listContainer.appendChild(box);
   });
 
   attachHandlers();
+  enableDragDrop();
 }
 
 /* ===============================
    2. Handlers & Updates
    =============================== */
 function attachHandlers() {
-  // Checkbox toggle
+  // checkbox toggle
   document.querySelectorAll(".shop-item").forEach(box => {
     box.onchange = async () => {
       const id = box.dataset.id;
@@ -102,7 +91,7 @@ function attachHandlers() {
     };
   });
 
-  // Strike-through on item name
+  // strike-through toggle
   document.querySelectorAll(".item-name").forEach(span => {
     span.onclick = async () => {
       const id = span.closest("label").querySelector(".shop-item").dataset.id;
@@ -116,7 +105,7 @@ function attachHandlers() {
       });
     };
 
-    // Double-click delete
+    // delete on double click
     span.ondblclick = async () => {
       const id = span.closest("label").querySelector(".shop-item").dataset.id;
       if (confirm(`Delete "${span.textContent.trim()}"?`)) {
@@ -126,7 +115,7 @@ function attachHandlers() {
     };
   });
 
-  // Amount change
+  // amount change
   document.querySelectorAll(".amount-input").forEach(inp => {
     inp.oninput = async () => {
       const id = inp.dataset.id;
@@ -138,10 +127,59 @@ function attachHandlers() {
       });
     };
   });
+
+  // ingredient input → add on Enter
+  if (ingredientInput) {
+    ingredientInput.addEventListener("keydown", async e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const name = ingredientInput.value.trim();
+        if (!name) return;
+        const cat = detectCategory(name);
+        await addNewItem(name, cat);
+        ingredientInput.value = "";
+      }
+    });
+  }
 }
 
 /* ===============================
-   3. Add new item
+   3. Drag & Drop between categories
+   =============================== */
+function enableDragDrop() {
+  const allCats = document.querySelectorAll(".category");
+  let dragged = null;
+
+  document.querySelectorAll(".item-row").forEach(row => {
+    row.addEventListener("dragstart", () => {
+      dragged = row;
+      row.classList.add("dragging");
+    });
+    row.addEventListener("dragend", () => {
+      row.classList.remove("dragging");
+      dragged = null;
+    });
+  });
+
+  allCats.forEach(catBox => {
+    catBox.addEventListener("dragover", e => e.preventDefault());
+    catBox.addEventListener("drop", async e => {
+      e.preventDefault();
+      if (!dragged) return;
+      const newCat = catBox.dataset.cat;
+      const id = dragged.dataset.id;
+      await fetch(`/api/shopping_list/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: newCat })
+      });
+      await loadShoppingList();
+    });
+  });
+}
+
+/* ===============================
+   4. Add new item
    =============================== */
 async function addNewItem(name, category) {
   const res = await fetch("/api/shopping_list", {
@@ -155,47 +193,58 @@ async function addNewItem(name, category) {
 }
 
 /* ===============================
-   4. Add Ingredients from Meals
-   =============================== */
-if (addIngredientsBtn) {
-  addIngredientsBtn.onclick = async () => {
-    const checkedBoxes = document.querySelectorAll("#meals .meal .checkbox:checked");
-    let added = 0;
-
-    for (const box of checkedBoxes) {
-      const name = box.parentNode.textContent.trim();
-      if (!name) continue;
-      const exists = items.some(i => i.name.toLowerCase() === name.toLowerCase());
-      if (!exists) {
-        const category = detectCategory(name);
-        await addNewItem(name, category);
-        added++;
-      }
-    }
-    alert(`✅ Added ${added} new ingredients to the shopping list.`);
-  };
-}
-
-/* ===============================
-   5. Clear list (non-destructive)
+   5. Clear list & meal plan
    =============================== */
 if (clearBtn) {
   clearBtn.onclick = async () => {
-    if (confirm("Clear current list (keep items in history)?")) {
+    if (confirm("Clear current shopping list (keep items in history)?")) {
       await fetch("/api/shopping_list/clear", { method: "POST" });
       await loadShoppingList();
     }
   };
 }
 
+if (clearMealPlanBtn) {
+  clearMealPlanBtn.onclick = () => {
+    if (confirm("Clear all meal plan selections?")) {
+      const selects = document.querySelectorAll("#mealGridContainer select");
+      selects.forEach(sel => (sel.value = ""));
+      console.log("Meal plan cleared");
+    }
+  };
+}
+
 /* ===============================
-   6. Generate overlay list
+   6. Save Planner (combined snapshot)
+   =============================== */
+if (saveBtn) {
+  saveBtn.onclick = async () => {
+    const plannerData = {
+      timestamp: new Date().toISOString(),
+      shopping_list: items,
+      recipes: JSON.parse(localStorage.getItem("selectedRecipes") || "[]"),
+      meal_plan: document.getElementById("mealGridContainer").innerHTML
+    };
+    await fetch("/api/planner/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(plannerData)
+    });
+    alert("💾 Planner saved successfully.");
+  };
+}
+
+/* ===============================
+   7. Overlay list
    =============================== */
 if (generateBtn) {
   generateBtn.onclick = async () => {
-    const overlay = document.getElementById("listOverlay");
-    const list = document.getElementById("finalList");
-    list.innerHTML = "";
+    const overlay = document.getElementById("overlay");
+    const content = document.getElementById("overlayContent");
+    const dateBox = document.getElementById("overlayDate");
+
+    dateBox.textContent = new Date().toLocaleString();
+    content.innerHTML = "";
 
     categories.forEach(cat => {
       const catItems = items.filter(i => i.category === cat && i.checked && i.active !== false);
@@ -203,7 +252,7 @@ if (generateBtn) {
       const header = document.createElement("div");
       header.textContent = cat.toUpperCase() + ":";
       header.style.fontWeight = "bold";
-      list.appendChild(header);
+      content.appendChild(header);
       catItems.forEach(i => {
         const line = document.createElement("div");
         line.textContent = `• ${i.name}${i.amount ? ` (${i.amount})` : ""}`;
@@ -211,17 +260,16 @@ if (generateBtn) {
           line.style.textDecoration = "line-through";
           line.style.opacity = "0.6";
         }
-        list.appendChild(line);
+        content.appendChild(line);
       });
     });
 
-    overlay.style.display = "block";
-    document.body.classList.add("overlay-active");
+    overlay.hidden = false;
   };
 }
 
 /* ===============================
-   7. Category detection (same logic)
+   8. Category detection
    =============================== */
 const KEYMAP = {
   "Dairy & Eggs": ["milk","cheese","cream","butter","yog","egg"],
@@ -243,6 +291,6 @@ function detectCategory(name) {
 }
 
 /* ===============================
-   8. Init
+   9. Init
    =============================== */
 document.addEventListener("DOMContentLoaded", loadShoppingList);

@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, abort
 import sqlite3
-from tag_list import INGREDIENT_TAGS, TYPE_TAGS, OTHER_TAGS, OCCASION_TAGS
+
 from pathlib import Path
 import re
 import spacy
@@ -79,10 +79,14 @@ def to_json(value):
     if isinstance(value, list):
         return json.dumps(value)
     return value or "[]"
+
+
 def init_db():
-    """Create table if missing; ensure 'method' column exists."""
+    """Ensure all required tables and columns exist."""
     with get_conn() as conn:
         c = conn.cursor()
+
+        # --- recipes table ---
         c.execute("""
             CREATE TABLE IF NOT EXISTS recipes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,20 +95,21 @@ def init_db():
                 method TEXT
             )
         """)
-        # If DB existed before and lacks 'method', add it
         c.execute("PRAGMA table_info(recipes)")
-        cols = [row[1] for row in c.fetchall()]
-        if "method" not in cols:
-            c.execute("ALTER TABLE recipes ADD COLUMN method TEXT")
-        conn.commit()
+        cols = [r[1] for r in c.fetchall()]
+        for col, ddl in [
+            ("method", "ALTER TABLE recipes ADD COLUMN method TEXT"),
+            ("image_url", "ALTER TABLE recipes ADD COLUMN image_url TEXT"),
+            ("tags", "ALTER TABLE recipes ADD COLUMN tags TEXT"),
+        ]:
+            if col not in cols:
+                try:
+                    c.execute(ddl)
+                    conn.commit()
+                except Exception as e:
+                    print(f"⚠️ Skipped adding {col}: {e}")
 
-        if "image_url" not in cols:
-            c.execute("ALTER TABLE recipes ADD COLUMN image_url TEXT")
-
-        if "tags" not in cols:
-            c.execute("ALTER TABLE recipes ADD COLUMN tags TEXT")
-
-        # === Ensure shopping_list table exists ===
+        # --- shopping_list table ---
         c.execute("""
             CREATE TABLE IF NOT EXISTS shopping_list (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -114,25 +119,32 @@ def init_db():
                 checked INTEGER DEFAULT 1,
                 crossed INTEGER DEFAULT 0,
                 active INTEGER DEFAULT 1,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                updated_at TIMESTAMP
             )
         """)
-        conn.commit()   # ✅ Make sure this runs after the new table creation
-
-
-
-def delete_recipe(recipe_id):
-    with get_conn() as conn:
-        c = conn.cursor()
-        c.execute("DELETE FROM recipes WHERE id = ?", (recipe_id,))
         conn.commit()
 
+        # --- Patch older shopping_list schemas ---
+        c.execute("PRAGMA table_info(shopping_list)")
+        cols = [r[1] for r in c.fetchall()]
+        for col, ddl in [
+            ("amount", "ALTER TABLE shopping_list ADD COLUMN amount TEXT"),
+            ("crossed", "ALTER TABLE shopping_list ADD COLUMN crossed INTEGER DEFAULT 0"),
+            ("active", "ALTER TABLE shopping_list ADD COLUMN active INTEGER DEFAULT 1"),
+            ("updated_at", "ALTER TABLE shopping_list ADD COLUMN updated_at TIMESTAMP"),
+        ]:
+            if col not in cols:
+                try:
+                    c.execute(ddl)
+                    conn.commit()
+                    if col == "updated_at":
+                        c.execute("UPDATE shopping_list SET updated_at = CURRENT_TIMESTAMP")
+                        conn.commit()
+                except Exception as e:
+                    print(f"⚠️ Skipped adding {col}: {e}")
 
-def get_all_recipes():
-    with get_conn() as conn:
-        c = conn.cursor()
-        c.execute("SELECT id, name, ingredients, method, image_url, tags FROM recipes ORDER BY id DESC")
-        return c.fetchall()
+
+
 
 def update_recipe(recipe_id, name, ingredients, method, image_url, tags, linked_recipe, notes):
     with get_conn() as conn:
